@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JARVIS | Diagnóstico de Áudio PS5</title>
+<style>
+*{box-sizing:border-box}
+html{background:#05070e}
+body{margin:0;padding:22px 15px;color:#eef6ff;font:16px/1.5 Arial,Helvetica,sans-serif;background:radial-gradient(circle at 50% -5%,#073b53,#05070e 58%)}
+main{max-width:700px;margin:20px auto}
+h1{text-align:center;letter-spacing:.19em;font-size:30px;color:#80efff;margin:16px 0 0}
+.desc{color:#a8bccb;text-align:center;margin:10px 0 26px}
+.panel{background:#0e1725;border:1px solid #23556b;border-radius:14px;padding:20px;margin:15px 0}
+h2{font-size:16px;color:#83eaff;margin:0 0 10px}
+.small{font-size:13px;color:#a9bdd2}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+button{border:1px solid #26cce5;color:#f7ffff;background:#0a3a4c;border-radius:9px;min-height:60px;padding:10px;font-size:15px;font-weight:bold;cursor:pointer}
+button:focus{outline:3px solid white;outline-offset:2px}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.stop{background:#351825;border-color:#cc4566}
+.good{color:#68ecb0}.bad{color:#ff898f}.warn{color:#ffd87e}
+#state{font-size:16px;font-weight:bold;min-height:28px}
+#log{font-family:monospace;font-size:12px;white-space:pre-wrap;word-wrap:break-word;background:#050a11;border-radius:8px;border:1px solid #253e53;padding:13px;max-height:340px;overflow:auto;color:#bed4e5}
+footer{text-align:center;color:#95a7b7;font-size:12px;margin-top:23px}
+@media(max-width:410px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<h1>JARVIS AUDIO</h1>
+<p class="desc">Teste os formatos de voz sem iniciar o desbloqueio do PS5.</p>
+<section class="panel">
+<h2>1 · Reproduzir a voz</h2>
+<p class="small">Clique em cada formato. Quando ouvir “Olá, senhor”, anote o formato que funcionou. Cada botão inicia uma nova reprodução.</p>
+<div class="grid">
+<button id="testWav" type="button">▶ TESTAR WAV PCM</button>
+<button id="testAac" type="button">▶ TESTAR AAC/M4A</button>
+<button id="testMp3" type="button">▶ TESTAR MP3</button>
+<button id="testWeb" type="button">▶ WEB AUDIO (WAV)</button>
+<button id="stop" class="stop" type="button">■ PARAR VOZ</button>
+</div>
+</section>
+<section class="panel" aria-live="polite">
+<h2>2 · Resultado</h2>
+<div id="state" class="warn">Aguardando seu teste.</div>
+<p class="small">Uma mensagem “reproduzindo” mostra que o navegador aceitou a reprodução. Confirme também se você realmente ouviu o som no PS5.</p>
+<div id="log">Nenhum teste realizado.</div>
+</section>
+<footer>Nenhum exploit ou payload é executado nesta página. Não altera as configurações do PS5.</footer>
+</main>
+<script>
+(function(){
+"use strict";
+var voiceFiles={
+ WAV:{url:"./assets/jarvis-voice-ps5.wav",type:"audio/wav"},
+ AAC:{url:"./assets/jarvis-voice-ps5.m4a",type:"audio/mp4"},
+ MP3:{url:"./assets/jarvis-voice.mp3",type:"audio/mpeg"}
+};
+var player=new Audio();
+player.preload="none";
+var context=null,source=null,active="",timer=null,history=[];
+var result=document.getElementById("state");
+var logBox=document.getElementById("log");
+function record(line,kind){
+ var now=new Date(),stamp=("0"+now.getHours()).slice(-2)+":"+("0"+now.getMinutes()).slice(-2)+":"+("0"+now.getSeconds()).slice(-2);
+ history.push(stamp+" "+line);
+ if(history.length>40)history.shift();
+ logBox.textContent=history.join("\n");
+ if(kind){result.className=kind;result.textContent=line;}
+}
+function stop(){
+ if(timer){clearTimeout(timer);timer=null;}
+ try{player.pause();player.removeAttribute("src");player.load();}catch(e){}
+ if(source){try{source.onended=null;source.stop(0);}catch(e){}source=null;}
+ active="";
+}
+function details(){
+ var e=player.error;
+ return "readyState="+player.readyState+" networkState="+player.networkState+" errorCode="+(e?e.code:"nenhum")+" currentSrc="+(player.currentSrc||"(nenhuma)");
+}
+player.addEventListener("playing",function(){record(active+": reproduzindo. Você ouviu a voz?","good");});
+player.addEventListener("error",function(){if(active){record(active+": falha no navegador; "+details(),"bad");}});
+player.addEventListener("ended",function(){if(active){record(active+": arquivo chegou ao fim","good");}});
+function playFile(key){
+ stop();
+ active=key;
+ var f=voiceFiles[key];
+ record("Iniciando "+key+"; canPlayType="+(player.canPlayType(f.type)||"(vazio)"),"warn");
+ try{
+  player.src=f.url;
+  player.load();
+  var p=player.play();
+  if(p&&typeof p.then==="function"){p.then(function(){record(key+": play() aceito pelo navegador","good");},function(e){record(key+": play() rejeitado: "+(e&&e.name||"Erro")+" | "+details(),"bad");});}
+  else {record(key+": play() sem Promise; aguardando evento playing","warn");}
+  timer=setTimeout(function(){if(active===key&&player.paused){record(key+": sem reprodução confirmada em 8 segundos; "+details(),"bad");}},8000);
+ }catch(e){record(key+": exceção "+(e.name||"erro")+" "+e.message,"bad");}
+}
+function playWeb(){
+ stop();active="WEB AUDIO";
+ var Engine=window.AudioContext||window.webkitAudioContext;
+ if(!Engine){record("WEB AUDIO: AudioContext indisponível","bad");return;}
+ try{
+  if(!context)context=new Engine();
+  if(context.resume){var q=context.resume();if(q&&q.catch)q.catch(function(e){record("WebAudio resume: "+e.name,"bad");});}
+  record("WEB AUDIO: buscando WAV para decodificar","warn");
+  var xhr=new XMLHttpRequest();
+  xhr.open("GET",voiceFiles.WAV.url,true);xhr.responseType="arraybuffer";
+  xhr.onerror=function(){record("WEB AUDIO: erro de rede","bad");};
+  xhr.onload=function(){
+   if(xhr.status<200||xhr.status>=300){record("WEB AUDIO: HTTP "+xhr.status,"bad");return;}
+   try{
+    context.decodeAudioData(xhr.response,function(buffer){
+      try{
+       if(active!=="WEB AUDIO")return;
+       source=context.createBufferSource();source.buffer=buffer;source.connect(context.destination);
+       source.onended=function(){if(active==="WEB AUDIO")record("WEB AUDIO: reprodução encerrada","good");};
+       source.start(0);record("WEB AUDIO: reprodução iniciada (confirme se ouviu)","good");
+      }catch(e){record("WEB AUDIO: start: "+(e.name||e.message),"bad");}
+    },function(e){record("WEB AUDIO: falha ao decodificar WAV: "+(e&&e.name||e),"bad");});
+   }catch(e){record("WEB AUDIO: decodeAudioData: "+(e.name||e.message),"bad");}
+  };
+  xhr.send();
+ }catch(e){record("WEB AUDIO: AudioContext: "+(e.name||e.message),"bad");}
+}
+document.getElementById("testWav").onclick=function(){playFile("WAV");};
+document.getElementById("testAac").onclick=function(){playFile("AAC");};
+document.getElementById("testMp3").onclick=function(){playFile("MP3");};
+document.getElementById("testWeb").onclick=playWeb;
+document.getElementById("stop").onclick=function(){stop();record("Reprodução interrompida pelo usuário","warn");};
+record("Browser: "+navigator.userAgent);
+record("AudioContext="+!!(window.AudioContext||window.webkitAudioContext)+
+ " | WAV="+(player.canPlayType("audio/wav")||"não informado")+
+ " | AAC="+(player.canPlayType("audio/mp4")||"não informado")+
+ " | MP3="+(player.canPlayType("audio/mpeg")||"não informado"));
+})();
+</script>
+</body>
+</html>
