@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache">
+<title>PS5 JARVIS · Escolher site</title>
+<style>
+:root{--cyan:#00d9ff;--blue:#0070f0;--ink:#04070c;--muted:#9caaba}
+*{box-sizing:border-box}html{min-height:100%;background:#04070c}
+body{margin:0;min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:28px 18px;background:radial-gradient(ellipse at 50% 30%,rgba(0,112,240,.19),transparent 43%),linear-gradient(#05090f,#020306);color:#f4faff;font:16px/1.5 Arial,Helvetica,sans-serif}
+main{width:min(880px,100%);position:relative;z-index:1}
+.brand{text-align:center;letter-spacing:.36em;font-weight:bold;color:var(--cyan);font-size:12px;margin:0 0 12px}
+h1{margin:0;font-size:clamp(34px,6vw,56px);letter-spacing:.12em;line-height:1.16;text-align:center}
+.sub{text-align:center;color:var(--muted);font-size:15px;margin:18px auto 35px}
+.orb{width:90px;height:90px;margin:0 auto 21px;border-radius:50%;background:radial-gradient(circle,#bffbff 0%,#50dfff 8%,#1258a5 23%,transparent 53%);box-shadow:0 0 45px rgba(0,190,255,.29);border:1px solid rgba(0,217,255,.27);position:relative;animation:glow 3s ease-in-out infinite}
+.orb:before,.orb:after{content:"";position:absolute;inset:-13px;border:1px dashed rgba(0,217,255,.52);border-radius:50%;animation:spin 22s linear infinite}
+.orb:after{inset:-24px;border-style:solid;border-color:transparent transparent rgba(0,217,255,.25) rgba(0,217,255,.25);animation-direction:reverse;animation-duration:15s}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.site{display:flex;flex-direction:column;text-align:left;justify-content:space-between;min-height:225px;padding:27px;border:1px solid rgba(62,168,247,.33);border-radius:15px;background:linear-gradient(145deg,rgba(9,30,53,.91),rgba(6,12,24,.97));box-shadow:0 12px 40px rgba(0,0,0,.28);color:inherit;text-decoration:none;transition:background .2s,border-color .2s,transform .2s;outline:none}
+a.site{cursor:pointer}a.site:hover,a.site:focus{border-color:var(--cyan);background:linear-gradient(145deg,rgba(10,48,76,.95),rgba(7,18,36,.98));transform:translateY(-3px);box-shadow:0 0 0 2px rgba(0,217,255,.12)}
+.site.off{border-color:rgba(255,255,255,.1);opacity:.58;cursor:not-allowed}
+.count{color:var(--cyan);font-weight:700;letter-spacing:.2em;font-size:11px}
+.site.off .count{color:#8294ac}
+h2{font-size:clamp(21px,3vw,28px);line-height:1.2;margin:17px 0 8px;letter-spacing:.04em}
+.desc{color:#aebfd4;margin:0;font-size:14px}
+.action{color:#7deeff;font-size:12px;font-weight:700;letter-spacing:.13em;margin-top:26px}
+.site.off .action{color:#9a9da8}
+footer{text-align:center;font-size:11px;letter-spacing:.12em;color:#73869b;margin:34px auto 0}
+@media(max-width:620px){.grid{grid-template-columns:1fr}.site{min-height:185px;padding:21px}h1{font-size:32px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes glow{50%{box-shadow:0 0 62px rgba(0,210,255,.47)}}
+</style>
+</head>
+<body>
+<main>
+ <div class="orb" aria-hidden="true"></div>
+ <p class="brand">INTELIGÊNCIA ARTIFICIAL · PS5</p>
+ <h1>JARVIS</h1>
+ <p class="sub">Selecione o site que deseja abrir no seu PlayStation 5.</p>
+ <div class="grid">
+  <a class="site" id="site1" href="https://patriasco.github.io/PS5-JARVIS-RELAPSE/?v=2">
+   <div><span class="count">01 · PRINCIPAL</span><h2 id="name1">PS5 JARVIS</h2><p class="desc" id="desc1">Desbloqueio Relapse</p></div>
+   <span class="action">ABRIR SITE <span aria-hidden="true">↗</span></span>
+  </a>
+  <div class="site off" id="site2" aria-disabled="true">
+   <div><span class="count">02 · SEGUNDO SITE</span><h2 id="name2">SITE 2</h2><p class="desc" id="desc2">Aguardando o segundo endereço</p></div>
+   <span class="action" id="action2">LINK NÃO CONFIGURADO</span>
+  </div>
+ </div>
+ <footer>PS5 JARVIS · SELETOR DE 2 SITES · O DESBLOQUEIO NÃO COMEÇA AUTOMATICAMENTE</footer>
+</main>
+<script src="./menu-sites.js?v=1"></script>
+<script>
+(function(){
+ var items=window.JARVIS_MENU_SITES||[];
+ if(items[0]){
+  document.getElementById('name1').textContent=items[0].name||'PS5 JARVIS';
+  document.getElementById('desc1').textContent=items[0].subtitle||'';
+  if(/^https?:\/\//i.test(items[0].url||''))document.getElementById('site1').href=items[0].url;
+ }
+ if(items[1]){
+  document.getElementById('name2').textContent=items[1].name||'SITE 2';
+  document.getElementById('desc2').textContent=items[1].subtitle||'';
+  if(/^https?:\/\//i.test(items[1].url||'')){
+    var old=document.getElementById('site2');
+    var a=document.createElement('a');
+    a.className='site';a.id='site2';a.href=items[1].url;
+    a.innerHTML=old.innerHTML;
+    a.removeAttribute('aria-disabled');
+    old.parentNode.replaceChild(a,old);
+    document.getElementById('action2').textContent='ABRIR SITE ↗';
+  }
+ }
+})();
+</script>
+</body>
+</html>
