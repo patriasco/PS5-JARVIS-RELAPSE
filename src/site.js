@@ -67,6 +67,7 @@ let hasStarted = false;
 const startButton = document.getElementById("btnStartExploit");
 if (startButton) {
   startButton.disabled = false;
+  startButton.textContent = "INICIAR DESBLOQUEIO";
   startButton.addEventListener("click", () => {
     if (hasStarted) return;
     hasStarted = true;
