@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>PS5-Relapse</title>
+  <style>
+    html, body {
+      background: #060606;
+      color: #fff;
+    }
+  </style>
+<link rel="stylesheet" href="./assets/jarvis.css"></head>
+<body>
+  <div id="console" aria-hidden="true"></div>
+<div id="jarvis-shell" aria-label="JARVIS PS5 Relapse">
+  <canvas id="particles"></canvas>
+  <header class="brand"><div class="brand-mark">J<span>5</span></div>
+    <div><h1>JARVIS <b>PS5</b></h1><p>RELAPSE EXPLOIT · USERLAND / KERNEL / ELF LOADER</p></div>
+    <div id="pill" class="pill">Aguardando console</div>
+  </header>
+  <main class="center">
+    <div class="sphere-center"><div class="core-ring r1"></div><div class="core-ring r2"></div><div class="core-text">AI</div></div>
+    <section class="info">
+      <div class="phase">SISTEMA DE INICIALIZAÇÃO</div>
+      <div id="status">Preparando conexão...</div>
+      <div class="percent" id="percent">—</div>
+      <div class="track"><div id="progress"></div></div>
+      <div class="steps"><span id="step-0">01 · USERLAND</span><span id="step-1">02 · KERNEL</span><span id="step-2">03 · LOADER</span></div>
+      <div id="subtitle" class="subtitle">Assistente pronto para operar</div>
+      <div id="voice" class="voice">ÁUDIO: aguardando ativação</div>
+    </section>
+  </main>
+  <footer>
+    <div class="logs"><div class="section-title">ATIVIDADES REAIS</div><div id="logfeed">Carregando...</div></div>
+    <div class="controls">
+      <button id="play-voice" type="button">▶ Ativar voz JARVIS</button>
+      <button id="switch-accent" type="button">Cor: ciano/vermelho</button>
+    </div>
+    <div class="credit">RELAPSE: ntfargo e colaboradores · UI JARVIS: interface independente · Sem progresso simulado</div>
+  </footer>
+</div>
+<audio id="jarvis-audio" src="./assets/jarvis-voice.mp3" preload="auto"></audio>
+  <script src="./src/firmware.js"></script>
+  <script src="./src/main.js"></script>
+  <script src="./src/rop.js"></script>
+  <script src="./src/utils/syscalls.js"></script>
+  <script src="./assets/jarvis-ui.js"></script>
+  <script type="module" src="./src/site.js"></script>
+</body>
+</html>
