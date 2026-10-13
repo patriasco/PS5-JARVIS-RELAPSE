@@ -84,7 +84,7 @@ if (startButton) {
     run().catch((error) => {
       writeLog(error instanceof Error ? error.message : String(error), "error");
       startButton.textContent = "FALHA · RECARREGUE PARA TENTAR NOVAMENTE";
-    });
+    }).finally(() => { window.__jarvisExploitActive = false; window.dispatchEvent(new Event('jarvis:execution-ended')); });
   });
 } else {
   writeLog("Botão de iniciar não encontrado; exploit não executado", "error");
