@@ -64,6 +64,14 @@ export async function executeSelectedPayload(p, chain, sys, key, report) {
   }
 
   try {
+    // If PLD Manager is already running, never submit the ELF twice.
+    try {
+      if (await connectLocal(PORT_MANAGER, false)) {
+        report("PLD Manager já está ativo na porta 8084; nada será enviado novamente.");
+        return {commandSent:false, managerReady:true, alreadyRunning:true, name:key, servicePort:PORT_MANAGER};
+      }
+    } finally { await closeCurrent(); }
+
     let connected = false;
     for (let i=0; i<6; i++) {
       if (await connectLocal(PORT_LOADER, true)) { connected=true; break; }
