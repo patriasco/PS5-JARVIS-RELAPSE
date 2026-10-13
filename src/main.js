@@ -269,6 +269,21 @@ async function main(userlandRW) {
   if (result.payloads) {
     log("kernel exploit complete", "info");
     log("ELF Loader despachado; porta 9021 ainda não confirmada", "info");
+    // Experimental and explicitly opt-in. The normal JARVIS remains unchanged.
+    // Run with ?autoload=pldmgr only after validating it on the console.
+    if (new URLSearchParams(location.search).get("autoload") === "pldmgr") {
+      log("JARVIS V5.2: autoload experimental de SOMENTE PLD Manager", "info");
+      try {
+        const { sendInstalledPLD } = await import("./pldmgr-autoload.js?v=5.2");
+        await sendInstalledPLD(p, chain, {
+          open: SYS_OPEN, read: SYS_READ, write: SYS_WRITE, close: SYS_CLOSE,
+          socket: SYS_SOCKET, connect: SYS_CONNECT, setsockopt: SYS_SETSOCKOPT
+        }, log);
+      } catch (error) {
+        // Never attempt the kernel exploit again from this error handler.
+        log("Autoload PLD falhou: " + String(error && error.message || error), "error");
+      }
+    }
   } else {
     throw new Error("Fluxo do Kernel terminou sem confirmar o envio do ELF Loader");
   }
