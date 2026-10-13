@@ -166,9 +166,13 @@ function setupAnalyser() {
 }
 
 const energyWave=[0,4,69,77,57,58,37,20,16,40,27,17,13,8,10,4,1,1,1,1,2,2,3,13,50,56,60,38,29,47,78,67,48,52,28,66,40,32,58,63,33,30,45,37,3,0,10,19,14,8,2,1,1,1,1,2,23,52,69,81,59,69,81,57,60,67,64,47,42,33,17,50,49,28,31,46,45,41,39,21,15,6,0,0,1,1,1,2,10,59,93,83,54,37,45,62,59,50,53,44,44,49,37,47,45,37,18,6,1,0,2,2,2,1,1,1,1,1,2,47,100,75,56,48,73,49,22,62,85,66,59,37,69,61,32,43,55,61,70,55,32,31,21,20,28,18,10,7,8,5,2,2,4,16,96,68,62,36,38,50,28,14,6,2,1,1,0];
+let jarvisWebAudioCtx=null,jarvisWebAudioSource=null,jarvisWebAudioStart=0,jarvisWebAudioActive=false,jarvisWebAudioDone=false;
+function jarvisTime(){return jarvisWebAudioActive&&jarvisWebAudioCtx?Math.max(0,jarvisWebAudioCtx.currentTime-jarvisWebAudioStart):(audio.currentTime||0);}
+function jarvisEnded(){return jarvisWebAudioActive?jarvisWebAudioDone:audio.ended;}
+function jarvisPlaying(){return jarvisWebAudioActive?!jarvisWebAudioDone:!audio.paused&&!audio.ended;}
 function getEnergy(){
-  if(!speaking||!audioOn||audio.paused||audio.ended)return 0;
-  const idx=Math.min(energyWave.length-1,Math.floor((audio.currentTime||0)*20));
+  if(!speaking||!audioOn||!jarvisPlaying())return 0;
+  const idx=Math.min(energyWave.length-1,Math.floor(jarvisTime()*20));
   return (energyWave[idx]||0)/100;
 }
 
@@ -237,9 +241,9 @@ draw();
 
 function syncLoop(){
  if (!running)return;
- const ct=audio.currentTime||0;
+ const ct=jarvisTime();
  while(cueIdx<cues.length&&ct>=cues[cueIdx].t){applyCue(cues[cueIdx++]);}
- if(!audio.ended)requestAnimationFrame(syncLoop);
+ if(!jarvisEnded())requestAnimationFrame(syncLoop);
  else {running=false;speaking=false;$voiceBars.classList.remove('on');$sub.classList.remove('show');}
 }
 
@@ -274,31 +278,73 @@ function onRelapseLog(){
 }
 if(window.MutationObserver)new MutationObserver(onRelapseLog).observe($con,{childList:true,characterData:true,subtree:true});
 else setInterval(onRelapseLog,500);
+
 function fallbackAudio(reason){
  document.getElementById('audioToggle').style.display='block';
- log('Áudio automático bloqueado pelo navegador: '+String(reason),'err');
+ log('Áudio indisponível: '+String(reason),'err');
+}
+function jarvisAudioStarted(){
+ speaking=true;running=true;cueIdx=0;
+ document.getElementById('audioToggle').style.display='none';
+ $voiceBars.classList.add('on');syncLoop();
+}
+function jarvisAudioEnded(){
+ jarvisWebAudioDone=true;running=false;speaking=false;
+ $voiceBars.classList.remove('on');$sub.classList.remove('show');
+}
+async function tryWebAudioFallback(){
+ try{
+  if(!jarvisWebAudioCtx)throw new Error('Web Audio indisponível');
+  if(jarvisWebAudioCtx.resume)await jarvisWebAudioCtx.resume();
+  const resp=await fetch('./assets/jarvis-voice.mp3');
+  if(!resp.ok)throw new Error('HTTP '+resp.status);
+  const source=await resp.arrayBuffer();
+  const decoded=await new Promise(function(resolve,reject){
+   const result=jarvisWebAudioCtx.decodeAudioData(source,resolve,reject);
+   if(result&&typeof result.then==='function')result.then(resolve,reject);
+  });
+  jarvisWebAudioSource=jarvisWebAudioCtx.createBufferSource();
+  jarvisWebAudioSource.buffer=decoded;
+  jarvisWebAudioSource.connect(jarvisWebAudioCtx.destination);
+  jarvisWebAudioSource.onended=jarvisAudioEnded;
+  jarvisWebAudioStart=jarvisWebAudioCtx.currentTime;
+  jarvisWebAudioDone=false;jarvisWebAudioActive=true;
+  jarvisWebAudioSource.start(0);
+  log('JARVIS: voz iniciada pelo Web Audio','info');
+  jarvisAudioStarted();
+ }catch(e){
+  fallbackAudio('NotSupportedError: navegador não reproduziu a voz via MP3 nem Web Audio ('+
+    String(e&&e.name||e&&e.message||'erro')+')');
+ }
 }
 function startVoice(){
- if(speaking||audio.ended)return;
+ if(speaking||jarvisPlaying())return;
+ // Context created during the real user click, before asynchronous playback.
+ if(!jarvisWebAudioCtx&&(window.AudioContext||window.webkitAudioContext)){
+  try{
+   jarvisWebAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+   const x=jarvisWebAudioCtx.resume();
+   if(x&&x.catch)x.catch(function(){});
+  }catch(e){jarvisWebAudioCtx=null;}
+ }
+ if(audio.ended)try{audio.currentTime=0;}catch(e){}
  audio.muted=false;audio.volume=1;
+ function error(e){
+  if(e&&e.name==='NotSupportedError')tryWebAudioFallback();
+  else fallbackAudio(e&&e.name||'reprodução bloqueada');
+ }
  try{
-  const p=audio.play();
-  if(p&&typeof p.then==='function')p.then(function(){
-   speaking=true;running=true;
-   document.getElementById('audioToggle').style.display='none';
-   $voiceBars.classList.add('on');syncLoop();
-  }).catch(function(err){fallbackAudio(err&&err.name||'bloqueio');});
-  else setTimeout(function(){
-   if(audio.paused)fallbackAudio('sem autorização para iniciar');
-   else{speaking=true;running=true;$voiceBars.classList.add('on');syncLoop();}
-  },300);
- }catch(err){fallbackAudio(err&&err.name||'erro');}
+  const result=audio.play();
+  if(result&&typeof result.then==='function')
+   result.then(jarvisAudioStarted).catch(error);
+  else setTimeout(function(){if(audio.paused)tryWebAudioFallback();else jarvisAudioStarted();},350);
+ }catch(e){error(e);}
 }
 document.getElementById('audioToggle').onclick=startVoice;
 // Voz acionada pela mesma interação de INICIAR, sem bloquear as etapas.
 window.jarvisStartVoice = startVoice;
-audio.addEventListener('ended',function(){running=false;speaking=false;$voiceBars.classList.remove('on');$sub.classList.remove('show');});
-audio.addEventListener('error',function(){log('MP3 não reproduzível (erro '+(audio.error&&audio.error.code)+')','err');});
+audio.addEventListener('ended',jarvisAudioEnded);
+audio.addEventListener('error',function(){log('MP3 não suportado pelo elemento de áudio (erro '+(audio.error&&audio.error.code)+')','err');});
 setStages(-1);
 window.__jarvisExploitActive=false;
 var jarvisStartButton=document.getElementById('btnStartExploit');
