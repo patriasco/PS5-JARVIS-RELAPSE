@@ -39,14 +39,14 @@ footer{text-align:center;font-size:11px;letter-spacing:.12em;color:#73869b;margi
  <h1>JARVIS</h1>
  <p class="sub">Selecione o site que deseja abrir no seu PlayStation 5.</p>
  <div class="grid">
-  <a class="site" id="site1" href="https://patriasco.github.io/PS5-JARVIS-RELAPSE/?v=2">
-   <div><span class="count">01 · PRINCIPAL</span><h2 id="name1">PS5 JARVIS</h2><p class="desc" id="desc1">Desbloqueio Relapse</p></div>
+  <a class="site" id="site1" href="https://patriasco.github.io/PS5-JARVIS-RELAPSE/?v=jarvisdiag1">
+   <div><span class="count">01 · COM VOZ</span><h2 id="name1">JARVIS NORMAL</h2><p class="desc" id="desc1">Com voz e animação · Desbloqueio Relapse</p></div>
    <span class="action">ABRIR SITE <span aria-hidden="true">↗</span></span>
   </a>
-  <div class="site off" id="site2" aria-disabled="true">
-   <div><span class="count">02 · SEGUNDO SITE</span><h2 id="name2">SITE 2</h2><p class="desc" id="desc2">Aguardando o segundo endereço</p></div>
-   <span class="action" id="action2">LINK NÃO CONFIGURADO</span>
-  </div>
+  <a class="site" id="site2" href="https://patriasco.github.io/PS5-JARVIS-RELAPSE/?v=jarvisdiag1&amp;noaudio=1">
+   <div><span class="count">02 · SEM ÁUDIO</span><h2 id="name2">JARVIS DIAGNÓSTICO</h2><p class="desc" id="desc2">Sem áudio · Teste do ELF Loader e porta 9021</p></div>
+   <span class="action" id="action2">ABRIR SITE ↗</span>
+  </a>
  </div>
  <footer>PS5 JARVIS · SELETOR DE 2 SITES · O DESBLOQUEIO NÃO COMEÇA AUTOMATICAMENTE</footer>
 </main>
@@ -60,22 +60,16 @@ footer{text-align:center;font-size:11px;letter-spacing:.12em;color:#73869b;margi
   if(/^https?:\/\//i.test(items[0].url||''))document.getElementById('site1').href=items[0].url;
  }
  if(items[1]){
-  document.getElementById('name2').textContent=items[1].name||'SITE 2';
+  document.getElementById('name2').textContent=items[1].name||'JARVIS DIAGNÓSTICO';
   document.getElementById('desc2').textContent=items[1].subtitle||'';
   if(/^https?:\/\//i.test(items[1].url||'')){
-    var old=document.getElementById('site2');
-    var a=document.createElement('a');
-    a.className='site';a.id='site2';a.href=items[1].url;
-    a.innerHTML=old.innerHTML;
-    a.removeAttribute('aria-disabled');
-    old.parentNode.replaceChild(a,old);
-    document.getElementById('action2').textContent='ABRIR SITE ↗';
+    document.getElementById('site2').href=items[1].url;
   }
  }
  var cfg=document.createElement('script');
  cfg.src='./menu-sites.js?fresh='+(new Date()).getTime();
  cfg.onload=applySites;
- cfg.onerror=function(){/* Site 1 retains its static link; Site 2 stays unavailable. */};
+ cfg.onerror=function(){/* Both buttons retain their working static links. */};
  document.head.appendChild(cfg);
 })();
 </script>
