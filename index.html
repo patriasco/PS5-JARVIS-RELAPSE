@@ -173,6 +173,12 @@ function getEnergy(){
 }
 
 function draw() {
+  // Prevent 4,100 canvas particles competing with WebKit/kernel exploit.
+  // The current frame stays visible and animation resumes after it finishes.
+  if (window.__jarvisExploitActive) {
+    requestAnimationFrame(draw);
+    return;
+  }
   ctx.fillStyle = 'rgba(0,0,0,0.3)';
   ctx.fillRect(0, 0, W, H);
   t += 0.016;
@@ -243,6 +249,7 @@ let realPhase=-1,realFailed=false;
 function realStage(n,message){
  if(realFailed||n<realPhase)return;
  realPhase=n;
+ if(n===3)window.__jarvisExploitActive=false;
  const milestones=[0,33,66,100];
  const pct=milestones[Math.min(3,n)];
  $pct.textContent=pct+'%';$bar.style.width=pct+'%';
@@ -257,7 +264,7 @@ function onRelapseLog(){
   if(!/^\[[*+\-]\]/.test(msg))continue;
   const lower=msg.toLowerCase();
   if(/^\[-\]/.test(msg)||/not supported|playstation 5 required|fw version not found|memory primitive unavailable|kernel exploit did not finish|exploit failed|exception/.test(lower)){
-   realFailed=true;$main.textContent='Falha no desbloqueio';$main.style.color='#e50914';$bar.style.background='#e50914';continue;
+   realFailed=true;window.__jarvisExploitActive=false;$main.textContent='Falha no desbloqueio';$main.style.color='#e50914';$bar.style.background='#e50914';continue;
   }
   if(/elfldr is listening on port 9021|kernel chain complete/.test(lower))realStage(3,'Desbloqueio concluído · Loader ativo');
   else if(/kernel exploit complete/.test(lower))realStage(2,'Kernel liberado · Iniciando Loader');
@@ -293,7 +300,14 @@ window.jarvisStartVoice = startVoice;
 audio.addEventListener('ended',function(){running=false;speaking=false;$voiceBars.classList.remove('on');$sub.classList.remove('show');});
 audio.addEventListener('error',function(){log('MP3 não reproduzível (erro '+(audio.error&&audio.error.code)+')','err');});
 setStages(-1);
-// Não iniciar exploração nem áudio antes do clique do usuário.
+window.__jarvisExploitActive=false;
+var jarvisStartButton=document.getElementById('btnStartExploit');
+if(jarvisStartButton){
+  jarvisStartButton.addEventListener('click',function(){
+    window.__jarvisExploitActive=true;
+  });
+}
+// The exploit and voice start only through src/site.js after user interaction.
 </script>
 <script src="./src/firmware.js"></script>
 <script src="./src/main.js"></script>
