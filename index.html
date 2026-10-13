@@ -66,7 +66,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shad
   <div class="con" id="console"></div>
   <button id="btnStartExploit" type="button" disabled>PREPARANDO...</button>
 </div>
-<audio id="jarvisAudio" preload="auto" playsinline>
+<audio id="jarvisAudio" preload="none" playsinline>
  <source src="./assets/jarvis-voice-ps5.wav" type="audio/wav">
  <source src="./assets/jarvis-voice-ps5.m4a" type="audio/mp4">
  <source src="./assets/jarvis-voice.mp3" type="audio/mpeg">
@@ -75,6 +75,8 @@ h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shad
 // ===== ÁUDIO EMBUTIDO (funciona offline, sem caminho externo) =====
 const AUDIO_B64 = "";
 const audio = document.getElementById('jarvisAudio');
+const jarvisSilentMode = new URLSearchParams(location.search).get('noaudio') === '1';
+if(jarvisSilentMode){audio.querySelectorAll('source').forEach(function(source){source.removeAttribute('src');});audio.removeAttribute('src');}
 // A ordem de compatibilidade é WAV PCM, AAC LC e MP3; a seleção é do navegador.
 
 const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
@@ -276,7 +278,7 @@ function onRelapseLog(){
   }
   // Do not treat kernel-only success as proof that the ELF loader is running.
   // Relapse logs indicate that elfldr was dispatched, not a confirmed open TCP port.
-  if(/elfldr is listening on port 9021/.test(lower))realStage(2,'ELF Loader enviado · porta 9021 não verificada');
+  if(/elf loader despachado/.test(lower))realStage(2,'ELF Loader enviado · porta 9021 não verificada');
   else if(/kernel chain complete/.test(lower))realStage(2,'Kernel concluído · ELF Loader não confirmado');
   else if(/kernel exploit complete/.test(lower))realStage(2,'Kernel liberado · Iniciando Loader');
   else if(/arw ready|webkit base:|worker chain: ready/.test(lower))realStage(1,'USERLAND concluído · Iniciando KERNEL');
@@ -325,6 +327,7 @@ async function tryWebAudioFallback(){
  }
 }
 function startVoice(){
+ if(jarvisSilentMode)return;
  if(speaking||jarvisPlaying())return;
  // Context created during the real user click, before asynchronous playback.
  if(!jarvisWebAudioCtx&&(window.AudioContext||window.webkitAudioContext)){
@@ -354,6 +357,7 @@ audio.addEventListener('ended',jarvisAudioEnded);
 audio.addEventListener('error',function(){log('O navegador rejeitou as fontes de áudio disponíveis (erro '+(audio.error&&audio.error.code)+')','err');});
 setStages(-1);
 window.__jarvisExploitActive=false;
+window.addEventListener('jarvis:execution-ended',function(){window.__jarvisExploitActive=false;});
 var jarvisStartButton=document.getElementById('btnStartExploit');
 if(jarvisStartButton){
   jarvisStartButton.addEventListener('click',function(){
@@ -366,6 +370,6 @@ if(jarvisStartButton){
 <script src="./src/main.js"></script>
 <script src="./src/rop.js"></script>
 <script src="./src/utils/syscalls.js"></script>
-<script type="module" src="./src/site.js?v=jarvisdiag1"></script>
+<script type="module" src="./src/site.js?v=5"></script>
 </body>
 </html>
