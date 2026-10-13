@@ -40,3 +40,16 @@ A branch [experimento-pldmgr-v5-2](https://github.com/patriasco/PS5-JARVIS-RELAP
 - V5.2 não foi testado no PS5 real; não há evidência de redução da taxa de KP.
 - Não foi realizada conexão real à porta 9021 ou execução do PLD.
 - Backup pré-V5: [backup-jarvis-pre-v5-20261013](https://github.com/patriasco/PS5-JARVIS-RELAPSE/tree/backup-jarvis-pre-v5-20261013).
+
+
+## V5.3 — Correção do indicador parado em 66%
+
+- Causa confirmada no código: o evento de conclusão do fluxo era ausente. Após o envio do ELF Loader a interface ficava em `realStage(2)`, que corresponde a 66%.
+- `src/site.js`: quando `run()` resolve sem erro, dispara o evento `jarvis:exploit-flow-finished`.
+- `index.html`: recebe esse evento e avança para `realStage(3)`, exibindo **100%** com a mensagem **Fluxo Relapse finalizado · porta 9021 não verificada**.
+- Em caso de erro terminal, **não** avança artificialmente para 100%.
+- Testes simulados no navegador do PC: 66% → 100% em sucesso e permanência em 66% com mensagem de falha; nenhum erro JavaScript.
+- O novo `PS5-JARVIS-Atalho-Principal-V5-3.elf` é um instalador de atalho de site único para `?v=5.3`, com Title ID `JARV00002`, compilado e verificado no PC.
+- A exploração do Kernel, os offsets, o shellcode e o PLD autoload **não foram alterados**.
+- **100% representa o término do fluxo JavaScript Relapse. Não comprova que a porta 9021 está aceitando conexões nem que o PLD Manager foi iniciado.**
+- Ainda precisa de teste no PS5 real. Backup no GitHub: `backup-jarvis-pre-v5-3`.
