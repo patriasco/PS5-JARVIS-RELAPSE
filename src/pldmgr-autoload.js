@@ -1,102 +1,107 @@
-// JARVIS: local-only PLD Manager sender, intentionally separate from Relapse exploit.
-// This module is used only with ?autoload=pldmgr, after elfldr is confirmed ready.
-// It never sends etaHEN, kstuff, or any other payload. If PLD is absent, stop.
+// JARVIS V5.2 experimental: send ONLY the existing local PLD Manager v0.5.2 ELF.
+// No automatic activation: main.js requires the explicit URL option autoload=pldmgr.
+// A successful TCP transfer does not prove the PLD Manager executed on the console.
+const LOCAL_PLDMGR = "/data/pldmgr/payloads/pldmgr/pldmgr_v0.5.2.elf";
+const MAX_ELF_SIZE = 4 * 1024 * 1024;
+const BLOCK = 0x4000;
+
+function checkElfHeader(data) {
+  if (data.length < 64 || data[0] !== 0x7f || data[1] !== 0x45 ||
+      data[2] !== 0x4c || data[3] !== 0x46 ||
+      data[4] !== 2 || data[5] !== 1 || data[6] !== 1 ||
+      data[18] !== 0x3e || data[19] !== 0)
+    throw new Error("Arquivo PLD inválido (exige ELF64 x86-64 little-endian)");
+  // At least one loadable program header must be present in a normal PS5 ELF.
+  const phoff = data[32] + data[33] * 256 + data[34] * 65536 + data[35] * 16777216;
+  const phentsize = data[54] + 256 * data[55];
+  const phnum = data[56] + 256 * data[57];
+  if (phoff < 64 || phentsize < 56 || phnum < 1 || phnum > 128)
+    throw new Error("Cabeçalho PLD sem tabela de segmentos válida");
+}
+
 export async function sendInstalledPLD(p, chain, sys, log) {
-  if (window.__jarvisPLDAlreadyAttempted) return;
-  window.__jarvisPLDAlreadyAttempted = true;
-
-  const paths = [
-    "/data/pldmgr/payloads/pldmgr/pldmgr_v0.5.2.elf",
-    "/data/ps5_autoloader/pldmgr_v0.5.2.elf",
-    "/data/payloads/pldmgr_v0.5.2.elf",
-    "/data/pldmgr_v0.5.2.elf",
-    "/mnt/usb0/ps5_autoloader/pldmgr_v0.5.2.elf",
-    "/mnt/usb1/ps5_autoloader/pldmgr_v0.5.2.elf",
-    "/mnt/usb2/ps5_autoloader/pldmgr_v0.5.2.elf",
-  ];
-
-  // Keep one native buffer resident for the duration of the transfer.
-  const readBuffer = p.malloc(0x4000, 1);
-  const addr = p.malloc(0x10, 1);
-  const noSigPipe = p.malloc(4, 1);
-  const timeout = p.malloc(0x10, 1);
-  p.write4(noSigPipe, 1);
-  p.write4(timeout, 12);
-  p.write4(timeout.add32(4), 0);
-  p.write4(timeout.add32(8), 0);
-  p.write4(timeout.add32(12), 0);
-
-  // sockaddr_in (FreeBSD), TCP localhost:9021.
-  addr.backing.fill(0);
-  addr.backing[0] = 16;
-  addr.backing[1] = 2;
-  addr.backing[2] = (9021 >> 8) & 255;
-  addr.backing[3] = 9021 & 255;
-  addr.backing[4] = 127;
-  addr.backing[7] = 1;
-
-  let file = -1;
-  let socket = -1;
-  let chosenPath = "";
+  if (window.__jarvisPLDState) {
+    throw new Error("Autoload PLD já iniciado nesta sessão; não repetir");
+  }
+  window.__jarvisPLDState = "locating";
+  const resultCode = value => value.low | 0;
+  let fd = -1, socket = -1;
   try {
-    for (const path of paths) {
-      const result = (await chain.syscall(sys.open, p.stringify(path), 0, 0)).low | 0;
-      if (result >= 0) {
-        file = result;
-        chosenPath = path;
-        break;
-      }
+    const readPtr = p.malloc(BLOCK, 1);
+    const socketAddr = p.malloc(16, 1);
+    const nosigpipe = p.malloc(4, 1);
+    const timeout = p.malloc(16, 1);
+    // Native FreeBSD sockaddr_in: length, AF_INET, port network order, 127.0.0.1.
+    socketAddr.backing.fill(0);
+    socketAddr.backing[0] = 16;
+    socketAddr.backing[1] = 2;
+    socketAddr.backing[2] = (9021 >>> 8) & 255;
+    socketAddr.backing[3] = 9021 & 255;
+    socketAddr.backing[4] = 127;
+    socketAddr.backing[7] = 1;
+    p.write4(nosigpipe, 1);
+    p.write4(timeout, 5);
+    p.write4(timeout.add32(4), 0);
+    p.write4(timeout.add32(8), 0);
+    p.write4(timeout.add32(12), 0);
+
+    fd = resultCode(await chain.syscall(sys.open, p.stringify(LOCAL_PLDMGR), 0, 0));
+    if (fd < 0) throw new Error("PLD Manager não encontrado: " + LOCAL_PLDMGR);
+
+    // Read and validate the complete ELF BEFORE connecting or transferring data.
+    // This prevents sending an invalid or oversized, partially transferred ELF.
+    const chunks = [];
+    let total = 0, count;
+    while ((count = resultCode(await chain.syscall(sys.read, fd, readPtr, BLOCK))) > 0) {
+      if (total + count > MAX_ELF_SIZE) throw new Error("ELF maior que 4 MiB; envio cancelado");
+      chunks.push(readPtr.backing.slice(0, count));
+      total += count;
     }
-    if (file < 0) {
-      throw new Error("PLD Manager não localizado. Salve o ELF em /data/ps5_autoloader/pldmgr_v0.5.2.elf");
-    }
+    if (count < 0) throw new Error("Falha de leitura do PLD no PS5");
+    if (!chunks.length || total < 64) throw new Error("Arquivo PLD vazio ou incompleto");
+    checkElfHeader(chunks[0]);
+    window.__jarvisPLDState = "validated";
+    log("PLD localizado e validado: " + total + " bytes", "info");
 
-    log("PLD Manager localizado: " + chosenPath, "info");
-    let length = (await chain.syscall(sys.read, file, readBuffer, 0x4000)).low | 0;
-    if (length < 64) throw new Error("PLD Manager: arquivo vazio ou inválido");
-    const data = readBuffer.backing;
-    if (data[0] !== 0x7f || data[1] !== 0x45 || data[2] !== 0x4c ||
-        data[3] !== 0x46 || data[18] !== 0x3e || data[19] !== 0)
-      throw new Error("PLD Manager: o arquivo não é um ELF x86-64 válido");
-
-    socket = (await chain.syscall(sys.socket, 2, 1, 0)).low | 0;
-    if (socket < 0) throw new Error("PLD Manager: falha ao criar socket local");
-
-    const option1 = (await chain.syscall(sys.setsockopt, socket, 0xffff, 0x0800, noSigPipe, 4)).low | 0;
-    const option2 = (await chain.syscall(sys.setsockopt, socket, 0xffff, 0x1005, timeout, 16)).low | 0;
-    if (option1 < 0 || option2 < 0) throw new Error("PLD Manager: falha nas opções de socket");
-
-    let connected = false;
-    for (let attempt = 0; attempt < 8; attempt++) {
-      const rv = (await chain.syscall(sys.connect, socket, addr, 16)).low | 0;
-      if (rv >= 0) { connected = true; break; }
-      // A socket that failed connect may need to be recreated.
+    // The loader on supported Relapse releases may bind only to localhost.
+    // Create a NEW socket each attempt and set options again on that socket.
+    let ready = false;
+    for (let attempt = 0; attempt < 6; attempt++) {
+      socket = resultCode(await chain.syscall(sys.socket, 2, 1, 0));
+      if (socket < 0) throw new Error("Falha ao criar socket local PS5");
+      const opt1 = resultCode(await chain.syscall(sys.setsockopt, socket, 0xffff, 0x0800, nosigpipe, 4));
+      const opt2 = resultCode(await chain.syscall(sys.setsockopt, socket, 0xffff, 0x1005, timeout, 16));
+      if (opt1 < 0 || opt2 < 0) throw new Error("Falha ao configurar opções do socket");
+      const rv = resultCode(await chain.syscall(sys.connect, socket, socketAddr, 16));
+      if (rv >= 0) { ready = true; break; }
       await chain.syscall(sys.close, socket);
       socket = -1;
-      await new Promise(resolve => setTimeout(resolve, 350));
-      socket = (await chain.syscall(sys.socket, 2, 1, 0)).low | 0;
-      if (socket < 0) break;
+      if (attempt < 5) await new Promise(resolve => setTimeout(resolve, 400));
     }
-    if (!connected) throw new Error("ELF Loader não disponível em 127.0.0.1:9021");
+    if (!ready) throw new Error("ELF Loader local indisponível em 127.0.0.1:9021");
+    window.__jarvisPLDState = "sending";
+    log("Conexão local 9021 confirmada; enviando PLD Manager", "info");
 
-    let total = 0;
-    while (length > 0) {
-      if (total + length > 4 * 1024 * 1024)
-        throw new Error("PLD Manager: arquivo excede o limite de segurança de 4 MiB");
-      let sent = 0;
-      while (sent < length) {
-        const written = (await chain.syscall(sys.write, socket, readBuffer.add32(sent), length - sent)).low | 0;
-        if (written <= 0) throw new Error("PLD Manager: envio interrompido em " + (total + sent) + " bytes");
-        sent += written;
+    let sent = 0;
+    for (const chunk of chunks) {
+      readPtr.backing.set(chunk, 0);
+      let offset = 0;
+      while (offset < chunk.length) {
+        const n = resultCode(await chain.syscall(sys.write, socket, readPtr.add32(offset), chunk.length - offset));
+        if (n <= 0 || n > chunk.length - offset)
+          throw new Error("Falha durante envio do PLD em " + (sent + offset) + " bytes");
+        offset += n;
       }
-      total += length;
-      length = (await chain.syscall(sys.read, file, readBuffer, 0x4000)).low | 0;
-      if (length < 0) throw new Error("PLD Manager: erro ao ler arquivo local");
+      sent += chunk.length;
     }
-    log("PLD Manager v0.5.2 enviado automaticamente (" + total + " bytes)", "info");
-    return total;
+    window.__jarvisPLDState = "sent";
+    log("PLD Manager transferido: " + sent + " bytes; execução ainda não confirmada", "info");
+    return { path: LOCAL_PLDMGR, bytes: sent, transferred: true };
+  } catch (e) {
+    window.__jarvisPLDState = "failed";
+    throw e;
   } finally {
     if (socket >= 0) try { await chain.syscall(sys.close, socket); } catch (_) {}
-    if (file >= 0) try { await chain.syscall(sys.close, file); } catch (_) {}
+    if (fd >= 0) try { await chain.syscall(sys.close, fd); } catch (_) {}
   }
 }
