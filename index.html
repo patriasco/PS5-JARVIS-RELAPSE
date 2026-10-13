@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Y2JB — Synced Voice Particle Sphere</title>
+<title>PS5 JARVIS — Desbloqueio Relapse</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Rajdhani:wght@400;500&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -51,7 +51,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shad
 </div>
 <div class="subtitle" id="subtitle"></div>
 <div class="ui">
-  <h1>Y2JB AUTOLOADER</h1>
+  <h1>PS5 JARVIS</h1>
   <div class="sub">PLAYSTATION 5 · VOICE SYNCED SPHERE</div>
   <div class="pct" id="pct">0%</div>
   <div class="lbl">JARVIS CORE</div>
@@ -60,7 +60,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shad
   <div class="stages">
     <span class="st" data-s="0">USERLAND</span>
     <span class="st" data-s="1">KERNEL</span>
-    <span class="st" data-s="2">AUTOLOAD</span>
+    <span class="st" data-s="2">ELF LOADER</span>
     <span class="st" data-s="3">PRONTO</span>
   </div>
   <div class="con" id="console"></div>
@@ -274,7 +274,9 @@ function onRelapseLog(){
   if(/^\[-\]/.test(msg)||/not supported|playstation 5 required|fw version not found|memory primitive unavailable|kernel exploit did not finish|exploit failed|exception/.test(lower)){
    realFailed=true;window.__jarvisExploitActive=false;$main.textContent='Falha no desbloqueio';$main.style.color='#e50914';$bar.style.background='#e50914';continue;
   }
-  if(/elfldr is listening on port 9021|kernel chain complete/.test(lower))realStage(3,'Desbloqueio concluído · Loader ativo');
+  // Do not treat kernel-only success as proof that the ELF loader is running.
+  if(/elfldr is listening on port 9021/.test(lower))realStage(3,'Desbloqueio concluído · Loader iniciado (9021)');
+  else if(/kernel chain complete/.test(lower))realStage(2,'Kernel concluído · ELF Loader não confirmado');
   else if(/kernel exploit complete/.test(lower))realStage(2,'Kernel liberado · Iniciando Loader');
   else if(/arw ready|webkit base:|worker chain: ready/.test(lower))realStage(1,'USERLAND concluído · Iniciando KERNEL');
   else if(/starting webkit exploit/.test(lower))realStage(0,'Iniciando USERLAND');
