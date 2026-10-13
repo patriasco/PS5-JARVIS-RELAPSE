@@ -50,9 +50,9 @@ footer{text-align:center;font-size:11px;letter-spacing:.12em;color:#73869b;margi
  </div>
  <footer>PS5 JARVIS · SELETOR DE 2 SITES · O DESBLOQUEIO NÃO COMEÇA AUTOMATICAMENTE</footer>
 </main>
-<script src="./menu-sites.js?v=1"></script>
 <script>
 (function(){
+ function applySites(){
  var items=window.JARVIS_MENU_SITES||[];
  if(items[0]){
   document.getElementById('name1').textContent=items[0].name||'PS5 JARVIS';
@@ -72,6 +72,11 @@ footer{text-align:center;font-size:11px;letter-spacing:.12em;color:#73869b;margi
     document.getElementById('action2').textContent='ABRIR SITE ↗';
   }
  }
+ var cfg=document.createElement('script');
+ cfg.src='./menu-sites.js?fresh='+(new Date()).getTime();
+ cfg.onload=applySites;
+ cfg.onerror=function(){/* Site 1 retains its static link; Site 2 stays unavailable. */};
+ document.head.appendChild(cfg);
 })();
 </script>
 </body>
