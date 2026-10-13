@@ -272,7 +272,7 @@ async function main(userlandRW) {
     // Keep the working ROP primitives alive for a user-selected payload.
     // No payload is executed here; the user must click PLD Manager later.
     window.__jarvisPayloadSender = async function(selectedKey, progress) {
-      const module = await import("./payload-selector.js?v=1");
+      const module = await import("./payload-selector.js?v=manual-2");
       return module.executeSelectedPayload(p, chain, {
         socket: SYS_SOCKET, connect: SYS_CONNECT, write: SYS_WRITE,
         close: SYS_CLOSE, setsockopt: SYS_SETSOCKOPT
