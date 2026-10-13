@@ -34,6 +34,17 @@ h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shad
 #btnStartExploit{display:block;position:relative;z-index:7;margin:19px auto 0;width:min(330px,90vw);min-height:54px;background:rgba(0,217,255,.12);border:1px solid #00d9ff;border-radius:8px;box-shadow:0 0 20px rgba(0,217,255,.21);color:#00d9ff;font:600 12px 'Orbitron',sans-serif;letter-spacing:1px;cursor:pointer}
 #btnStartExploit:focus{outline:2px solid #fff;outline-offset:3px}
 #btnStartExploit:disabled{opacity:.65;cursor:default}
+#btnPayloadMode{display:block;position:relative;z-index:7;margin:10px auto 0;width:min(330px,90vw);min-height:44px;background:rgba(0,112,240,.12);border:1px solid rgba(90,157,255,.65);border-radius:8px;color:#b7e8ff;font:600 12px 'Orbitron',sans-serif;letter-spacing:2px;cursor:pointer}
+#btnPayloadMode:disabled{opacity:.45;cursor:default}
+#payloadPanel{display:none;position:fixed;inset:0;z-index:29;background:rgba(0,4,12,.94);padding:22px;align-items:center;justify-content:center;pointer-events:auto}
+#payloadCard{width:min(470px,96vw);padding:24px 19px;border:1px solid rgba(0,217,255,.6);border-radius:14px;background:linear-gradient(145deg,#0a2030,#030810);box-shadow:0 0 45px rgba(0,112,240,.2);text-align:center;max-height:95vh;overflow-y:auto}
+#payloadCard h2{font:600 19px 'Orbitron',sans-serif;letter-spacing:2px;color:#9ff5ff;margin:0 0 14px}
+#payloadCard p{font:15px/1.5 'Rajdhani',Arial,sans-serif;color:#c5d6e4;margin:10px auto}
+.payloadAction{display:block;min-height:50px;width:100%;background:rgba(0,112,240,.15);color:#e7faff;border:1px solid #0070f0;border-radius:8px;font:600 12px 'Orbitron',sans-serif;letter-spacing:1px;margin:11px auto;padding:10px;cursor:pointer;text-decoration:none}
+.payloadAction:disabled{opacity:.45;cursor:default}
+.payloadAction.secondary{background:transparent;border-color:rgba(255,255,255,.25);color:#9fb0c3}
+#payloadStatus{min-height:28px;color:#7cdbff;white-space:pre-wrap;word-break:break-word}
+
 .audio-btn{position:fixed;top:12px;right:16px;z-index:10;font-size:9px;padding:5px 10px;background:transparent;border:1px solid rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-family:'Orbitron',sans-serif;transition:all 0.4s}
 .audio-btn.active{border-color:#00D9FF;color:#00D9FF;box-shadow:0 0 14px rgba(0,217,255,0.35)}
 .demo{position:fixed;top:10px;left:12px;font-size:9px;opacity:0.28;letter-spacing:2px;font-family:'Orbitron',sans-serif;z-index:10}
@@ -68,6 +79,18 @@ h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shad
   </div>
   <div class="con" id="console"></div>
   <button id="btnStartExploit" type="button" disabled>PREPARANDO...</button>
+  <button id="btnPayloadMode" type="button" disabled>PAYLOADS</button>
+</div>
+<div id="payloadPanel" role="dialog" aria-modal="true" aria-labelledby="payloadTitle">
+  <div id="payloadCard">
+    <h2 id="payloadTitle">JARVIS · PAYLOADS</h2>
+    <p>Fluxo Relapse finalizado. Escolha se deseja solicitar uma carga útil ao ELF Loader.</p>
+    <button class="payloadAction" id="payloadStartPLD" type="button">PLD MANAGER v0.5.2</button>
+    <p style="font-size:12px;opacity:.8">Arquivo já instalado em /data/pldmgr/payloads/pldmgr/ no PS5.</p>
+    <button class="payloadAction secondary" id="payloadCancel" type="button">NÃO CARREGAR</button>
+    <p id="payloadStatus" role="status">Nenhuma carga enviada.</p>
+    <a class="payloadAction" id="payloadOpenManager" style="display:none" href="http://127.0.0.1:8084/">ABRIR PLD MANAGER · 8084</a>
+  </div>
 </div>
 <audio id="jarvisAudio" preload="none" playsinline>
  <source src="./assets/jarvis-voice-ps5.wav" type="audio/wav">
@@ -380,12 +403,58 @@ if(jarvisStartButton){
     window.__jarvisExploitActive=true;
   });
 }
+// Payload menu appears only after a successful Relapse return in PAYLOADS mode.
+(function(){
+ const panel=document.getElementById('payloadPanel');
+ const launch=document.getElementById('payloadStartPLD');
+ const cancel=document.getElementById('payloadCancel');
+ const status=document.getElementById('payloadStatus');
+ const manager=document.getElementById('payloadOpenManager');
+ let requested=false;
+ window.addEventListener('jarvis:exploit-flow-finished',function(){
+   if(!window.__jarvisPayloadMode)return;
+   panel.style.display='flex';
+   status.textContent=window.__jarvisPayloadSender
+     ? 'Escolha PLD MANAGER ou NÃO CARREGAR.'
+     : 'O fluxo terminou sem preparar o envio de payloads.';
+   launch.disabled=!window.__jarvisPayloadSender;
+ });
+ cancel.onclick=function(){
+   if(requested)return;
+   panel.style.display='none';
+   status.textContent='Nenhuma carga solicitada.';
+ };
+ launch.onclick=function(){
+   if(requested || typeof window.__jarvisPayloadSender!=='function')return;
+   requested=true;
+   launch.disabled=true;cancel.disabled=true;
+   status.textContent='Conectando ao ELF Loader local...';
+   Promise.resolve().then(function(){
+     return window.__jarvisPayloadSender('pldmgr',function(message){
+       status.textContent=message;
+       log('PAYLOADS: '+message,'ok');
+     });
+   }).then(function(result){
+     if(result.managerReady){
+       status.textContent='PLD Manager respondeu na porta 8084.';
+       manager.style.display='block';
+       log('PLD Manager: porta 8084 confirmada no PS5','ok');
+     } else {
+       status.textContent='Comando enviado; serviço 8084 ainda não respondeu. Execução não confirmada.';
+       log('PLD enviado ao Loader; 8084 não confirmada','err');
+     }
+   },function(error){
+     status.textContent='Falha ao solicitar PLD: '+String(error&&error.message||error);
+     log(status.textContent,'err');
+   });
+ };
+})();
 // The exploit and voice start only through src/site.js after user interaction.
 </script>
 <script src="./src/firmware.js"></script>
-<script src="./src/main.js?v=5.1"></script>
+<script src="./src/main.js?v=payloadmenu-1"></script>
 <script src="./src/rop.js"></script>
 <script src="./src/utils/syscalls.js"></script>
-<script type="module" src="./src/site.js?v=permanente-1"></script>
+<script type="module" src="./src/site.js?v=payloadmenu-1"></script>
 </body>
 </html>
