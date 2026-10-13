@@ -61,7 +61,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shad
     <span class="st" data-s="0">USERLAND</span>
     <span class="st" data-s="1">KERNEL</span>
     <span class="st" data-s="2">ELF LOADER</span>
-    <span class="st" data-s="3">PRONTO</span>
+    <span class="st" data-s="3">FINALIZADO</span>
   </div>
   <div class="con" id="console"></div>
   <button id="btnStartExploit" type="button" disabled>PREPARANDO...</button>
@@ -366,6 +366,11 @@ audio.addEventListener('error',function(){log('O navegador rejeitou as fontes de
 setStages(-1);
 window.__jarvisExploitActive=false;
 window.addEventListener('jarvis:execution-ended',function(){window.__jarvisExploitActive=false;});
+window.addEventListener('jarvis:exploit-flow-finished',function(){
+  // 100% means the Relapse JavaScript flow completed and dispatched the loader,
+  // NOT that TCP 9021 is reachable or that PLD Manager is running.
+  realStage(3,'Fluxo Relapse finalizado · porta 9021 não verificada');
+});
 var jarvisStartButton=document.getElementById('btnStartExploit');
 if(jarvisStartButton){
   jarvisStartButton.addEventListener('click',function(){
@@ -378,6 +383,6 @@ if(jarvisStartButton){
 <script src="./src/main.js?v=5.1"></script>
 <script src="./src/rop.js"></script>
 <script src="./src/utils/syscalls.js"></script>
-<script type="module" src="./src/site.js?v=5.2"></script>
+<script type="module" src="./src/site.js?v=5.3"></script>
 </body>
 </html>
