@@ -28,6 +28,9 @@ h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shad
 .btn.red{border-color:rgba(229,9,20,0.45);color:#E50914}
 .btn.primary{border-color:rgba(0,217,255,0.55);color:#00D9FF;background:rgba(0,217,255,0.08)}
 .btn:disabled{opacity:0.3;cursor:default}
+#btnStartExploit{display:block;position:relative;z-index:7;margin:19px auto 0;width:min(330px,90vw);min-height:54px;background:rgba(0,217,255,.12);border:1px solid #00d9ff;border-radius:8px;box-shadow:0 0 20px rgba(0,217,255,.21);color:#00d9ff;font:600 12px 'Orbitron',sans-serif;letter-spacing:1px;cursor:pointer}
+#btnStartExploit:focus{outline:2px solid #fff;outline-offset:3px}
+#btnStartExploit:disabled{opacity:.65;cursor:default}
 .audio-btn{position:fixed;top:12px;right:16px;z-index:10;font-size:9px;padding:5px 10px;background:transparent;border:1px solid rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-family:'Orbitron',sans-serif;transition:all 0.4s}
 .audio-btn.active{border-color:#00D9FF;color:#00D9FF;box-shadow:0 0 14px rgba(0,217,255,0.35)}
 .demo{position:fixed;top:10px;left:12px;font-size:9px;opacity:0.28;letter-spacing:2px;font-family:'Orbitron',sans-serif;z-index:10}
@@ -52,7 +55,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shad
   <div class="sub">PLAYSTATION 5 · VOICE SYNCED SPHERE</div>
   <div class="pct" id="pct">0%</div>
   <div class="lbl">JARVIS CORE</div>
-  <div class="status" id="mainStatus">Inicializando...</div>
+  <div class="status" id="mainStatus">Aguardando seu comando</div>
   <div class="bar"><div class="bar-f" id="barFill"></div></div>
   <div class="stages">
     <span class="st" data-s="0">USERLAND</span>
@@ -61,8 +64,9 @@ h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shad
     <span class="st" data-s="3">PRONTO</span>
   </div>
   <div class="con" id="console"></div>
+  <button id="btnStartExploit" type="button" disabled>PREPARANDO...</button>
 </div>
-<audio id="jarvisAudio" src="./assets/jarvis-voice.mp3" preload="auto" autoplay playsinline></audio>
+<audio id="jarvisAudio" src="./assets/jarvis-voice.mp3" preload="auto" playsinline></audio>
 <script>
 // ===== ÁUDIO EMBUTIDO (funciona offline, sem caminho externo) =====
 const AUDIO_B64 = "";
@@ -284,13 +288,12 @@ function startVoice(){
  }catch(err){fallbackAudio(err&&err.name||'erro');}
 }
 document.getElementById('audioToggle').onclick=startVoice;
-window.addEventListener('pointerdown',function(){if(!speaking&&!audio.ended)startVoice();},{once:true});
-window.addEventListener('keydown',function(e){if(!speaking&&!audio.ended&&(e.key==='Enter'||e.keyCode===13))startVoice();},{once:true});
+// Voz acionada pela mesma interação de INICIAR, sem bloquear as etapas.
+window.jarvisStartVoice = startVoice;
 audio.addEventListener('ended',function(){running=false;speaking=false;$voiceBars.classList.remove('on');$sub.classList.remove('show');});
 audio.addEventListener('error',function(){log('MP3 não reproduzível (erro '+(audio.error&&audio.error.code)+')','err');});
 setStages(-1);
-startVoice();
-window.addEventListener('pageshow',function(){if(!speaking&&!audio.ended)startVoice();});
+// Não iniciar exploração nem áudio antes do clique do usuário.
 </script>
 <script src="./src/firmware.js"></script>
 <script src="./src/main.js"></script>
