@@ -270,11 +270,22 @@ async function main(userlandRW) {
     log("kernel exploit complete", "info");
     log("ELF Loader despachado; porta 9021 ainda não confirmada", "info");
   } else {
-    log("Kernel finalizou sem confirmar o ELF Loader; privilégios não verificados", "info");
+    throw new Error("Fluxo do Kernel terminou sem confirmar o envio do ELF Loader");
   }
 }
 
+// Never enable START while firmware-specific offsets are missing.
+window.__jarvisOffsetsReady = false;
 const fwScript = document.createElement("script");
+fwScript.onload = () => {
+  if (!window.KRW || window.KRW.firmware !== window.fw_str ||
+      typeof window.KRW.allproc !== "number") {
+    window.dispatchEvent(new Event("jarvis:offsets-error"));
+    return;
+  }
+  window.__jarvisOffsetsReady = true;
+  window.dispatchEvent(new Event("jarvis:offsets-ready"));
+};
+fwScript.onerror = () => window.dispatchEvent(new Event("jarvis:offsets-error"));
+fwScript.src = `offsets/${window.fw_str}.js?v=5.1`;
 document.body.appendChild(fwScript);
-
-fwScript.setAttribute("src", `offsets/${window.fw_str}.js?v=` + Date.now());
