@@ -99,7 +99,13 @@ if (startButton) {
       try { window.jarvisStartVoice(); } catch (_) { /* audio must not block exploit */ }
     }
     writeLog("Desbloqueio iniciado pelo usuário", "info");
-    run().catch((error) => {
+    run().then(() => {
+      // main() has finished and reported that the loader was dispatched.
+      // We have NOT established that port 9021 accepts connections.
+      writeLog("Fluxo Relapse finalizado; Loader despachado, porta 9021 não verificada", "info");
+      window.dispatchEvent(new Event("jarvis:exploit-flow-finished"));
+      startButton.textContent = "FLUXO FINALIZADO";
+    }).catch((error) => {
       // Explicit terminal marker distinguishes a real rejection from recoverable
       // WebKit "Failed" retry logs and unsupported audio codecs.
       writeLog("ERRO FINAL: " + (error instanceof Error ? error.message : String(error)), "error");
