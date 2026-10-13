@@ -13,6 +13,19 @@ O cache do GitHub Pages ou do navegador PS5 pode atrasar a exibição de uma atu
 # PS5 Relapse Exploit
 Supported firmware: 7.00 through 13.60.
 
+## PAYLOADS manual no JARVIS
+
+No endereço permanente [PS5 JARVIS](https://patriasco.github.io/PS5-JARVIS-RELAPSE/), o botão **PAYLOADS** inicia o fluxo Relapse depois do clique do usuário. Somente se esse fluxo retornar com o ELF Loader despachado a página exibe a seleção:
+
+- **PLD MANAGER v0.5.2** — solicita ao ELF Loader local em `127.0.0.1:9021` o arquivo `file:/data/pldmgr/payloads/pldmgr/pldmgr_v0.5.2.elf`. Em seguida tenta confirmar o serviço local na porta `8084`.
+- **NÃO CARREGAR** — fecha o seletor e não envia nenhuma carga.
+
+A solicitação depende de um clique separado. Não reinicia o exploit, não instala outro ELF e não envia etaHEN ou kstuff. O arquivo PLD Manager deve estar previamente presente nesse caminho no PS5; o projeto não o inclui no GitHub.
+
+**Validação:** os arquivos de JavaScript passaram na checagem de sintaxe, o GitHub Pages respondeu HTTP 200 e o fluxo visual passou em um teste simulado de navegador de PC. **Ainda não foi executado no PS5 real** e um teste simulado não comprova que a porta 9021 ou o PLD Manager realmente funcionem no console. Caso a solicitação seja enviada e a porta 8084 não responda, a interface informa que a execução não está confirmada; não repita o envio na mesma sessão.
+
+O instalador **PS5-JARVIS-ATALHO-PERMANENTE.elf** continua apontando para a mesma URL principal, sem precisar ser recompilado para esta atualização.
+
 ## Usage
 The default payloads are stored in `payloads/` after a successful run, the ELF loader listens on port `9021`.
 
