@@ -1,28 +1,33 @@
-# PS5 JARVIS — V5 estável (13/10/2026)
+# PS5 JARVIS — V5.1 (13/10/2026)
 
-## Site principal
-https://patriasco.github.io/PS5-JARVIS-RELAPSE/?v=5
+**Site principal:** https://patriasco.github.io/PS5-JARVIS-RELAPSE/?v=5.1
 
-Esta versão mantém o Relapse, o botão **INICIAR DESBLOQUEIO**, a esfera de partículas e a voz, com melhorias de baixo risco:
+## Melhorias verificadas
+- Interface JARVIS com botão **INICIAR DESBLOQUEIO**, sem início automático.
+- Botão bloqueado até carregar os offsets correspondentes ao firmware.
+- Firmware não suportado ou offsets não carregados impedem o início.
+- O site não anuncia que a porta 9021 está aberta sem confirmação.
+- Retorno sem despacho do ELF Loader é tratado como erro, não conclusão.
+- A esfera de partículas retoma o desenho quando o fluxo JS termina.
+- Modo `?noaudio=1`: não disponibiliza fontes de áudio ao navegador.
+- Modo normal mantém as alternativas WAV, AAC/M4A e MP3.
+- O atalho ELF principal abre **somente este site**, sem menu.
 
-- Corrigida a mensagem que indicava a porta 9021 como aberta sem confirmação.
-- Corrigida a flag que podia deixar a animação pausada após a conclusão/falha.
-- Reduzido o pré-carregamento de áudio (`preload=none`).
-- O modo `?noaudio=1` agora evita fontes de áudio na página e não tenta reproduzir a voz.
-- O menu de dois modos continua no repositório, mas **não é mais utilizado pelo novo atalho ELF V5**.
+## Testes no PC
+- Navegador PC sem firmware PS5: botão bloqueado corretamente.
+- User agent PS5 firmware 7.00: offsets carregam e botão fica habilitado.
+- Diagnóstico PS5 7.00 com `noaudio=1`: nenhuma fonte de áudio ativa.
+- Os três testes passaram com HTTP 200 e zero erros JavaScript.
+- ELF V5.1 compilado com entrada ELF `0x710`, mantendo Title ID `JARV00002`.
+- SHA256: `b5b1e4136e73f7b67122fadca4895054aa24dd2375bc026475322c1cb28240b6`.
 
-## Atalho da aba Mídia
-O instalador **PS5-JARVIS-Atalho-Principal-V5.elf** foi gerado no PC a partir do instalador V3 previamente confirmado pelo usuário. Ele utiliza o mesmo Title ID `JARV00002`, com versão de conteúdo `01.003.000`, e aponta para **somente o site principal** (`?v=5`). A compilação foi validada, mas a V5 **ainda não foi testada no PS5 real**.
+## Limitações e pendências
+**Não foi afirmada compatibilidade comprovada no PS5 real para a V5.1.**
 
-## PLD Manager e estabilidade
-O módulo `src/pldmgr-autoload.js` permanece sem integração ao fluxo de exploração; portanto **não existe autoload ativo do PLD Manager nesta versão**. O código de Kernel/WebKit, shellcode e offsets foi preservado.
+O WebKit, a exploração do Kernel, os offsets e o shellcode permanecem originais. A auditoria do Codex identificou inconsistências no controle de sucesso, limpeza AIO e recuperação do Kernel, que exigem validação isolada antes de serem modificadas.
 
-A auditoria de 13/10 identificou condições com risco de falsos sucessos, limpeza AIO incompleta e falhas na recuperação de estados. Essas alterações não foram publicadas sem testes no hardware. O carregamento do PLD só deverá ser ativado após verificar a prontidão real da porta 9021 no próprio console, com confirmação de transferência e proteção contra envios repetidos.
+O PLD Manager **ainda não inicia automaticamente pelo JARVIS**. O módulo de autoload existe mas não é conectado ao fluxo principal. Enviar um ELF não comprova que ele foi executado. A prontidão local do ELF Loader na porta 9021 ainda requer confirmação dentro do console.
 
-## Reversão
-Branch de backup: `backup-jarvis-pre-v5-20261013`.
+O atalho **PS5-JARVIS-Atalho-Principal-V5-1.elf** é somente o instalador do ícone da aba Mídia. Não carrega payloads.
 
-## Testes
-- JavaScript de `index.html`, `src/site.js` e `src/main.js` verificado por `node --check`.
-- GitHub Pages: HTTP 200, páginas Normal e `?noaudio=1` sem erros JavaScript no Edge.
-- Nenhum teste de exploit, KP ou carregamento de PLD foi executado automaticamente no PS5.
+**Reversão:** branch `backup-jarvis-pre-v5-20261013`.
