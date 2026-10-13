@@ -65,6 +65,7 @@ async function run() {
 // USER-INITIATED RUN: loading this page never starts the exploit.
 let hasStarted = false;
 const startButton = document.getElementById("btnStartExploit");
+const payloadModeButton = document.getElementById("btnPayloadMode");
 if (startButton) {
   startButton.disabled = true;
   startButton.textContent = "VALIDANDO FIRMWARE...";
@@ -72,9 +73,11 @@ if (startButton) {
     if (!window.__jarvisOffsetsReady || window.firmware.rejection()) return;
     startButton.disabled = false;
     startButton.textContent = "INICIAR DESBLOQUEIO";
+    if (payloadModeButton && !hasStarted) payloadModeButton.disabled = false;
   };
   const failOffsets = () => {
     startButton.disabled = true;
+    if (payloadModeButton) payloadModeButton.disabled = true;
     startButton.textContent = "OFFSETS INDISPONÍVEIS";
     writeLog("Firmware ou offsets indisponíveis. Desbloqueio não iniciado.", "error");
   };
@@ -86,15 +89,22 @@ if (startButton) {
     window.addEventListener("jarvis:offsets-ready", enableWhenReady, { once: true });
     window.addEventListener("jarvis:offsets-error", failOffsets, { once: true });
   }
+  if (payloadModeButton) payloadModeButton.addEventListener("click", () => {
+    if (hasStarted || startButton.disabled || !window.__jarvisOffsetsReady) return;
+    window.__jarvisPayloadMode = true;
+    payloadModeButton.disabled = true;
+    startButton.click();
+  });
   startButton.addEventListener("click", () => {
     if (hasStarted || !window.__jarvisOffsetsReady || startButton.disabled) return;
     hasStarted = true;
     startButton.disabled = true;
+    if (payloadModeButton) payloadModeButton.disabled = true;
     startButton.textContent = "DESBLOQUEIO EM EXECUÇÃO...";
     // Diagnostic mode: run Relapse without audio to isolate browser load from KEXP.
     const silentDiagnostic = new URLSearchParams(window.location.search).get("noaudio") === "1";
-    if (silentDiagnostic) {
-      writeLog("JARVIS diagnóstico: voz desativada nesta execução", "info");
+    if (silentDiagnostic || window.__jarvisPayloadMode) {
+      writeLog("JARVIS: execução sem áudio (diagnóstico/payloads)", "info");
     } else if (typeof window.jarvisStartVoice === "function") {
       try { window.jarvisStartVoice(); } catch (_) { /* audio must not block exploit */ }
     }
