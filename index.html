@@ -1,51 +1,301 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>PS5-Relapse</title>
-  <style>
-    html, body {
-      background: #060606;
-      color: #fff;
-    }
-  </style>
-<link rel="stylesheet" href="./assets/jarvis.css"></head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Y2JB — Synced Voice Particle Sphere</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Rajdhani:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#fff;font-family:'Rajdhani',sans-serif;min-height:100vh;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+canvas{position:fixed;inset:0;z-index:0}
+.ui{position:relative;z-index:5;text-align:center;pointer-events:none}
+.ui *{pointer-events:auto}
+h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shadow:0 0 18px rgba(255,255,255,0.25)}
+.sub{font-size:10px;letter-spacing:3px;opacity:0.4;margin:5px 0 16px}
+.pct{font-family:'Orbitron',sans-serif;font-size:44px;font-weight:600;margin-top:250px;text-shadow:0 0 28px rgba(255,255,255,0.4);transition:text-shadow 0.3s}
+.lbl{font-size:9px;letter-spacing:3px;opacity:0.35;margin-top:3px}
+.status{margin-top:14px;font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;opacity:0.85;min-height:18px}
+.bar{width:260px;height:2px;background:rgba(255,255,255,0.08);margin:10px auto;overflow:hidden}
+.bar-f{height:100%;background:#fff;width:0%;box-shadow:0 0 8px #fff;transition:width 0.4s}
+.stages{display:flex;gap:16px;justify-content:center;margin-top:14px;font-size:10px;letter-spacing:1px;opacity:0.45}
+.st.on{opacity:1;color:#00D9FF;text-shadow:0 0 8px #00D9FF}.st.ok{opacity:1;color:#0f8}
+.con{width:90%;max-width:400px;height:52px;margin:10px auto 0;font-size:10px;opacity:0.55;overflow-y:auto;line-height:1.4}
+.con .ok{color:#0f8}.con .err{color:#E50914}.con .voice{color:#00D9FF}
+.ctrls{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.btn{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1px;padding:8px 14px;background:transparent;border:1px solid rgba(255,255,255,0.18);color:#fff;cursor:pointer;opacity:0.7}
+.btn:hover{opacity:1}
+.btn.red{border-color:rgba(229,9,20,0.45);color:#E50914}
+.btn.primary{border-color:rgba(0,217,255,0.55);color:#00D9FF;background:rgba(0,217,255,0.08)}
+.btn:disabled{opacity:0.3;cursor:default}
+.audio-btn{position:fixed;top:12px;right:16px;z-index:10;font-size:9px;padding:5px 10px;background:transparent;border:1px solid rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-family:'Orbitron',sans-serif;transition:all 0.4s}
+.audio-btn.active{border-color:#00D9FF;color:#00D9FF;box-shadow:0 0 14px rgba(0,217,255,0.35)}
+.demo{position:fixed;top:10px;left:12px;font-size:9px;opacity:0.28;letter-spacing:2px;font-family:'Orbitron',sans-serif;z-index:10}
+.voice-bars{display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);gap:3px;align-items:flex-end;height:28px;z-index:10}
+.voice-bars.on{display:flex}
+.vb{width:3px;background:#00D9FF;border-radius:1px;height:4px;transition:height 0.08s}
+.subtitle{position:fixed;bottom:52px;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:rgba(0,217,255,0.9);text-shadow:0 0 14px rgba(0,217,255,0.55);opacity:0;transition:opacity 0.35s;z-index:10;white-space:nowrap;pointer-events:none}
+.subtitle.show{opacity:1}
+</style>
+</head>
 <body>
-  <div id="console" aria-hidden="true"></div>
-<div id="jarvis-shell" aria-label="JARVIS PS5 Relapse">
-  <canvas id="particles"></canvas>
-  <header class="brand"><div class="brand-mark">J<span>5</span></div>
-    <div><h1>JARVIS <b>PS5</b></h1><p>RELAPSE EXPLOIT · USERLAND / KERNEL / ELF LOADER</p></div>
-    <div id="pill" class="pill">Aguardando console</div>
-  </header>
-  <main class="center">
-    <div class="sphere-center"><div class="core-ring r1"></div><div class="core-ring r2"></div><div class="core-text">AI</div></div>
-    <section class="info">
-      <div class="phase">SISTEMA DE INICIALIZAÇÃO</div>
-      <div id="status">Preparando conexão...</div>
-      <div class="percent" id="percent">—</div>
-      <div class="track"><div id="progress"></div></div>
-      <div class="steps"><span id="step-0">01 · USERLAND</span><span id="step-1">02 · KERNEL</span><span id="step-2">03 · LOADER</span></div>
-      <div id="subtitle" class="subtitle">Assistente pronto para operar</div>
-      <div id="voice" class="voice">ÁUDIO: aguardando ativação</div>
-    </section>
-  </main>
-  <footer>
-    <div class="logs"><div class="section-title">ATIVIDADES REAIS</div><div id="logfeed">Carregando...</div></div>
-    <div class="controls">
-      <button id="play-voice" type="button">▶ Ativar voz JARVIS</button>
-      <button id="switch-accent" type="button">Cor: ciano/vermelho</button>
-    </div>
-    <div class="credit">RELAPSE: ntfargo e colaboradores · UI JARVIS: interface independente · Sem progresso simulado</div>
-  </footer>
+<canvas id="c"></canvas>
+
+<button class="audio-btn" id="audioToggle" style="display:none">▶ ATIVAR ÁUDIO</button>
+<div class="voice-bars" id="voiceBars">
+  <div class="vb"></div><div class="vb"></div><div class="vb"></div><div class="vb"></div>
+  <div class="vb"></div><div class="vb"></div><div class="vb"></div>
 </div>
-<audio id="jarvis-audio" src="./assets/jarvis-voice.mp3" preload="auto"></audio>
-  <script src="./src/firmware.js"></script>
-  <script src="./src/main.js"></script>
-  <script src="./src/rop.js"></script>
-  <script src="./src/utils/syscalls.js"></script>
-  <script src="./assets/jarvis-ui.js"></script>
-  <script type="module" src="./src/site.js"></script>
+<div class="subtitle" id="subtitle"></div>
+<div class="ui">
+  <h1>Y2JB AUTOLOADER</h1>
+  <div class="sub">PLAYSTATION 5 · VOICE SYNCED SPHERE</div>
+  <div class="pct" id="pct">0%</div>
+  <div class="lbl">JARVIS CORE</div>
+  <div class="status" id="mainStatus">Inicializando...</div>
+  <div class="bar"><div class="bar-f" id="barFill"></div></div>
+  <div class="stages">
+    <span class="st" data-s="0">USERLAND</span>
+    <span class="st" data-s="1">KERNEL</span>
+    <span class="st" data-s="2">AUTOLOAD</span>
+    <span class="st" data-s="3">PRONTO</span>
+  </div>
+  <div class="con" id="console"></div>
+</div>
+<audio id="jarvisAudio" src="./assets/jarvis-voice.mp3" preload="auto" autoplay playsinline></audio>
+<script>
+// ===== ÁUDIO EMBUTIDO (funciona offline, sem caminho externo) =====
+const AUDIO_B64 = "";
+const audio = document.getElementById('jarvisAudio');
+audio.src = './assets/jarvis-voice.mp3';
+
+const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+let W, H, cx, cy, audioOn = true, pulse = 0, pulseT = 0, speaking = false;
+function resize(){ W = canvas.width = innerWidth; H = canvas.height = innerHeight; cx = W/2; cy = H/2 - 28; }
+resize(); addEventListener('resize', resize);
+
+// Partículas lentas
+const pts = [];
+for (let i = 0; i < 3400; i++) {
+  const u = Math.random(), v = Math.random();
+  pts.push({
+    theta: 2*Math.PI*u, phi: Math.acos(2*v-1),
+    r: 0.90 + Math.random()*0.12,
+    size: 0.45 + Math.random()*1.7,
+    speed: (0.00035 + Math.random()*0.001) * (Math.random() < 0.5 ? 1 : -1),
+    bright: 0.25 + Math.random()*0.75,
+    phase: Math.random()*Math.PI*2
+  });
+}
+for (let i = 0; i < 700; i++) {
+  const u = Math.random(), v = Math.random();
+  pts.push({
+    theta: 2*Math.PI*u, phi: Math.acos(2*v-1),
+    r: 1.06 + Math.random()*0.14,
+    size: 0.6 + Math.random()*2.2,
+    speed: (0.0005 + Math.random()*0.0012) * (Math.random() < 0.5 ? 1 : -1),
+    bright: 0.4 + Math.random()*0.6,
+    phase: Math.random()*Math.PI*2,
+    outer: true
+  });
+}
+
+// Timeline sincronizada com o MP3
+const cues = [
+  { t: 0.00, text: 'Olá, senhor.',            stage: -1, pct: 0,   energy: 0.55 },
+  { t: 1.00, text: 'Iniciando desbloqueio.',  stage:  0, pct: 12,  energy: 0.70 },
+  { t: 2.20, text: 'Userland concluído.',     stage:  0, pct: 35,  energy: 0.85 },
+  { t: 4.00, text: 'Kernel liberado.',        stage:  1, pct: 60,  energy: 0.90 },
+  { t: 5.20, text: 'Desbloqueio concluído.',  stage:  2, pct: 88,  energy: 0.95 },
+  { t: 6.50, text: 'Bom jogo.',               stage:  3, pct: 100, energy: 0.75 },
+  { t: 7.90, text: '',                        stage:  3, pct: 100, energy: 0.0  }
+];
+
+let rotY = 0, t = 0, cueIdx = 0, running = false;
+const $pct = document.getElementById('pct');
+const $bar = document.getElementById('barFill');
+const $main = document.getElementById('mainStatus');
+const $con = document.getElementById('console');
+const $sub = document.getElementById('subtitle');
+const $voiceBars = document.getElementById('voiceBars');
+const vbs = document.querySelectorAll('.vb');
+const $btnStart = document.getElementById('btnStart');
+
+function log(msg, cls = '') {
+  const d = document.createElement('div');
+  d.className = cls;
+  d.textContent = msg;
+  $con.appendChild(d);
+  $con.scrollTop = $con.scrollHeight;
+}
+function setStages(stage) {
+  document.querySelectorAll('.st').forEach((el, i) => {
+    el.classList.remove('on', 'ok');
+    if (i < stage) el.classList.add('ok');
+    else if (i === stage) el.classList.add('on');
+  });
+}
+function applyCue(c) {
+  if (c.text) {
+    $sub.textContent=c.text;
+    $sub.classList.add('show');
+  } else $sub.classList.remove('show');
+}
+// Web Audio analyser (amplitude real da voz)
+let analyser = null, dataArray = null, audioCtx = null, sourceNode = null;
+function setupAnalyser() {
+  if (analyser) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    sourceNode = audioCtx.createMediaElementSource(audio);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.78;
+    sourceNode.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    log('Motor de áudio pronto');
+  } catch (e) {
+    log('Analyser indisponível — usando timeline', 'err');
+    analyser = null;
+  }
+}
+
+const energyWave=[0,4,69,77,57,58,37,20,16,40,27,17,13,8,10,4,1,1,1,1,2,2,3,13,50,56,60,38,29,47,78,67,48,52,28,66,40,32,58,63,33,30,45,37,3,0,10,19,14,8,2,1,1,1,1,2,23,52,69,81,59,69,81,57,60,67,64,47,42,33,17,50,49,28,31,46,45,41,39,21,15,6,0,0,1,1,1,2,10,59,93,83,54,37,45,62,59,50,53,44,44,49,37,47,45,37,18,6,1,0,2,2,2,1,1,1,1,1,2,47,100,75,56,48,73,49,22,62,85,66,59,37,69,61,32,43,55,61,70,55,32,31,21,20,28,18,10,7,8,5,2,2,4,16,96,68,62,36,38,50,28,14,6,2,1,1,0];
+function getEnergy(){
+  if(!speaking||!audioOn||audio.paused||audio.ended)return 0;
+  const idx=Math.min(energyWave.length-1,Math.floor((audio.currentTime||0)*20));
+  return (energyWave[idx]||0)/100;
+}
+
+function draw() {
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(0, 0, W, H);
+  t += 0.016;
+  rotY += 0.0007;
+
+  const energy = getEnergy();
+  pulseT = audioOn ? energy : 0;
+  pulse += (pulseT - pulse) * 0.045;
+
+  if (speaking && audioOn) {
+    vbs.forEach((b, i) => {
+      const h = 4 + pulse * 24 * (0.35 + 0.65 * Math.abs(Math.sin(t * 3.5 + i * 0.8)));
+      b.style.height = h + 'px';
+    });
+  }
+
+  const R = Math.min(W, H) * 0.31 * (1 + pulse * 0.14);
+
+  pts.forEach(p => {
+    p.theta += p.speed;
+    const local = 1 + (speaking && audioOn ? Math.sin(t * 2.0 + p.phase) * 0.15 * pulse : 0);
+    let x = p.r * local * Math.sin(p.phi) * Math.cos(p.theta);
+    let y = p.r * local * Math.cos(p.phi);
+    let z = p.r * local * Math.sin(p.phi) * Math.sin(p.theta);
+    const x2 = x * Math.cos(rotY) - z * Math.sin(rotY);
+    const z2 = x * Math.sin(rotY) + z * Math.cos(rotY);
+    x = x2; z = z2;
+    const scale = 1 / (1.8 - z * 0.55);
+    const px = cx + x * R * scale, py = cy + y * R * scale;
+    const alpha = p.bright * (0.32 + (z + 1) * 0.32) * (1 + pulse * 0.75);
+    ctx.fillStyle = p.outer
+      ? `rgba(190,230,255,${Math.min(0.95, alpha)})`
+      : `rgba(255,255,255,${Math.min(1, alpha)})`;
+    ctx.beginPath();
+    ctx.arc(px, py, p.size * scale * (1 + pulse * 0.4), 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  if (pulse > 0.04) {
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.55);
+    g.addColorStop(0, `rgba(0,220,255,${0.07 + pulse * 0.22})`);
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  $pct.style.textShadow = pulse > 0.12
+    ? `0 0 ${18 + pulse * 32}px rgba(0,217,255,${0.35 + pulse * 0.55})`
+    : '0 0 28px rgba(255,255,255,0.4)';
+
+  requestAnimationFrame(draw);
+}
+draw();
+
+function syncLoop(){
+ if (!running)return;
+ const ct=audio.currentTime||0;
+ while(cueIdx<cues.length&&ct>=cues[cueIdx].t){applyCue(cues[cueIdx++]);}
+ if(!audio.ended)requestAnimationFrame(syncLoop);
+ else {running=false;speaking=false;$voiceBars.classList.remove('on');$sub.classList.remove('show');}
+}
+
+// The original sphere and visual effects above remain unmodified.
+// The voice timeline does NOT set exploit progress: only real Relapse events do.
+let realPhase=-1,realFailed=false;
+function realStage(n,message){
+ if(realFailed||n<realPhase)return;
+ realPhase=n;
+ const milestones=[0,33,66,100];
+ const pct=milestones[Math.min(3,n)];
+ $pct.textContent=pct+'%';$bar.style.width=pct+'%';
+ setStages(n);$main.textContent=message;
+}
+const seenNodes=new WeakSet();
+function onRelapseLog(){
+ for(const el of $con.children){
+  if(seenNodes.has(el))continue;
+  seenNodes.add(el);
+  const msg=(el.textContent||'').trim();
+  if(!/^\[[*+\-]\]/.test(msg))continue;
+  const lower=msg.toLowerCase();
+  if(/^\[-\]/.test(msg)||/not supported|playstation 5 required|fw version not found|memory primitive unavailable|kernel exploit did not finish|exploit failed|exception/.test(lower)){
+   realFailed=true;$main.textContent='Falha no desbloqueio';$main.style.color='#e50914';$bar.style.background='#e50914';continue;
+  }
+  if(/elfldr is listening on port 9021|kernel chain complete/.test(lower))realStage(3,'Desbloqueio concluído · Loader ativo');
+  else if(/kernel exploit complete/.test(lower))realStage(2,'Kernel liberado · Iniciando Loader');
+  else if(/arw ready|webkit base:|worker chain: ready/.test(lower))realStage(1,'USERLAND concluído · Iniciando KERNEL');
+  else if(/starting webkit exploit/.test(lower))realStage(0,'Iniciando USERLAND');
+ }
+}
+if(window.MutationObserver)new MutationObserver(onRelapseLog).observe($con,{childList:true,characterData:true,subtree:true});
+else setInterval(onRelapseLog,500);
+function fallbackAudio(reason){
+ document.getElementById('audioToggle').style.display='block';
+ log('Áudio automático bloqueado pelo navegador: '+String(reason),'err');
+}
+function startVoice(){
+ if(speaking||audio.ended)return;
+ audio.muted=false;audio.volume=1;
+ try{
+  const p=audio.play();
+  if(p&&typeof p.then==='function')p.then(function(){
+   speaking=true;running=true;
+   document.getElementById('audioToggle').style.display='none';
+   $voiceBars.classList.add('on');syncLoop();
+  }).catch(function(err){fallbackAudio(err&&err.name||'bloqueio');});
+  else setTimeout(function(){
+   if(audio.paused)fallbackAudio('sem autorização para iniciar');
+   else{speaking=true;running=true;$voiceBars.classList.add('on');syncLoop();}
+  },300);
+ }catch(err){fallbackAudio(err&&err.name||'erro');}
+}
+document.getElementById('audioToggle').onclick=startVoice;
+window.addEventListener('pointerdown',function(){if(!speaking&&!audio.ended)startVoice();},{once:true});
+window.addEventListener('keydown',function(e){if(!speaking&&!audio.ended&&(e.key==='Enter'||e.keyCode===13))startVoice();},{once:true});
+audio.addEventListener('ended',function(){running=false;speaking=false;$voiceBars.classList.remove('on');$sub.classList.remove('show');});
+audio.addEventListener('error',function(){log('MP3 não reproduzível (erro '+(audio.error&&audio.error.code)+')','err');});
+setStages(-1);
+startVoice();
+window.addEventListener('pageshow',function(){if(!speaking&&!audio.ended)startVoice();});
+</script>
+<script src="./src/firmware.js"></script>
+<script src="./src/main.js"></script>
+<script src="./src/rop.js"></script>
+<script src="./src/utils/syscalls.js"></script>
+<script type="module" src="./src/site.js"></script>
 </body>
 </html>
