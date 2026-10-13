@@ -54,7 +54,7 @@ async function run() {
     throw new Error(rejection);
   writeLog("Credits: Sonic_Iso, Jordy, ntfargo, ufm42, Dr. Yenyen, TheFlow, SlidyBat, Flatz, cow, nhk, bollarz, Sleirsgoevy, EchoStretch, EarthOnion", "info");
   writeLog(`Agent: ${navigator.userAgent}`, "info");
-  writeLog(`Firmware: ${window.fw_str}`, "info");
+  writeLog(`Firmware: ${window.fw_str} · JARVIS versão 5.1`, "info");
   const primitive = await getPrimitive();
   writeLog(`WebKit base: 0x${getWebKitBase().toString(16)}`, "info");
 
@@ -66,10 +66,28 @@ async function run() {
 let hasStarted = false;
 const startButton = document.getElementById("btnStartExploit");
 if (startButton) {
-  startButton.disabled = false;
-  startButton.textContent = "INICIAR DESBLOQUEIO";
+  startButton.disabled = true;
+  startButton.textContent = "VALIDANDO FIRMWARE...";
+  const enableWhenReady = () => {
+    if (!window.__jarvisOffsetsReady || window.firmware.rejection()) return;
+    startButton.disabled = false;
+    startButton.textContent = "INICIAR DESBLOQUEIO";
+  };
+  const failOffsets = () => {
+    startButton.disabled = true;
+    startButton.textContent = "OFFSETS INDISPONÍVEIS";
+    writeLog("Firmware ou offsets indisponíveis. Desbloqueio não iniciado.", "error");
+  };
+  if (window.firmware.rejection()) {
+    startButton.textContent = "FIRMWARE NÃO SUPORTADO";
+    writeLog(window.firmware.rejection(), "error");
+  } else {
+    enableWhenReady();
+    window.addEventListener("jarvis:offsets-ready", enableWhenReady, { once: true });
+    window.addEventListener("jarvis:offsets-error", failOffsets, { once: true });
+  }
   startButton.addEventListener("click", () => {
-    if (hasStarted) return;
+    if (hasStarted || !window.__jarvisOffsetsReady || startButton.disabled) return;
     hasStarted = true;
     startButton.disabled = true;
     startButton.textContent = "DESBLOQUEIO EM EXECUÇÃO...";
