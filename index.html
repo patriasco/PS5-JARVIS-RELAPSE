@@ -37,6 +37,15 @@ h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shad
 #btnPayloadMode{display:block;position:relative;z-index:7;margin:10px auto 0;width:min(330px,90vw);min-height:44px;background:rgba(0,112,240,.12);border:1px solid rgba(90,157,255,.65);border-radius:8px;color:#b7e8ff;font:600 12px 'Orbitron',sans-serif;letter-spacing:2px;cursor:pointer}
 #btnPayloadMode:disabled{opacity:.45;cursor:default}
 #btnPayloadMode[hidden]{display:none}
+#payloadPreference{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;margin:12px auto 0;width:min(340px,92vw);pointer-events:auto}
+#payloadAutoToggle{width:100%;min-height:44px;padding:10px;background:rgba(0,112,240,.09);border:1px solid rgba(125,175,222,.42);border-radius:9px;color:#bed7e8;font:600 10px 'Orbitron',Arial,sans-serif;letter-spacing:1.2px;cursor:pointer;transition:background .22s,border-color .22s,box-shadow .22s}
+#payloadAutoToggle[aria-checked="true"]{color:#94f8ff;border-color:#00d9ff;background:rgba(0,217,255,.15);box-shadow:0 0 13px rgba(0,217,255,.19)}
+#payloadAutoToggle:focus-visible{outline:2px solid #fff;outline-offset:3px}
+#payloadAutoToggle:disabled{opacity:.65;cursor:default}
+#payloadAutoHint{max-width:340px;font:12px/1.4 'Rajdhani',Arial,sans-serif;color:#9bb5c8;letter-spacing:.4px;text-align:center}
+#payloadAutoStatus{min-height:16px;max-width:340px;color:#89dfff;font:12px/1.45 'Rajdhani',Arial,sans-serif;text-align:center;overflow-wrap:anywhere}
+#payloadAutoStatus[data-state="error"]{color:#ff9f9f}
+#payloadAutoStatus[data-state="ok"]{color:#82f0cc}
 #btnPayloadMode:not(:disabled){background:linear-gradient(110deg,rgba(0,217,255,.22),rgba(0,112,240,.12));box-shadow:0 0 18px rgba(0,217,255,.24);animation:payloadReveal .6s ease both}
 #btnPayloadMode:focus-visible,.payloadAction:focus-visible{outline:2px solid #fff;outline-offset:3px}
 #payloadPanel{display:none;position:fixed;inset:0;z-index:29;background:rgba(0,4,12,.94);padding:22px;align-items:center;justify-content:center;pointer-events:auto}
@@ -98,6 +107,11 @@ h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shad
   <div class="con" id="console"></div>
   <button id="btnStartExploit" type="button" disabled>PREPARANDO...</button>
   <button id="btnPayloadMode" type="button" hidden disabled aria-controls="payloadPanel" aria-haspopup="dialog">◇ PAYLOADS</button>
+  <div id="payloadPreference" aria-label="Configurações do PLD Manager">
+    <button id="payloadAutoToggle" type="button" role="switch" aria-checked="true">PLD MANAGER AUTOMÁTICO: LIGADO</button>
+    <div id="payloadAutoHint">O PLD Manager será solicitado após o desbloqueio. Você pode desligar e voltar ao modo manual.</div>
+    <div id="payloadAutoStatus" role="status" aria-live="polite"></div>
+  </div>
 </div>
 <div id="payloadPanel" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="payloadTitle">
   <div id="payloadCard">
@@ -426,78 +440,10 @@ if(jarvisStartButton){
     window.__jarvisExploitActive=true;
   });
 }
-// Menu available ONLY after successful Relapse completion; never launches an exploit.
-(function(){
- const openButton=document.getElementById('btnPayloadMode');
- const panel=document.getElementById('payloadPanel');
- const launch=document.getElementById('payloadStartPLD');
- const closeButton=document.getElementById('payloadCancel');
- const status=document.getElementById('payloadStatus');
- const manager=document.getElementById('payloadOpenManager');
- let busy=false, completed=false, submissionLocked=false;
- function showStatus(message,state){
-   status.textContent=message;
-   status.setAttribute('data-state',state||'idle');
- }
- function closeMenu(){
-   if(busy)return;
-   panel.style.display='none';
-   panel.setAttribute('aria-hidden','true');
-   openButton.focus();
- }
- function openMenu(){
-   if(openButton.disabled||openButton.hidden||typeof window.__jarvisPayloadSender!=='function')return;
-   panel.style.display='flex';
-   panel.setAttribute('aria-hidden','false');
-   launch.disabled=busy||submissionLocked||!!window.__jarvisPayloadSubmissionStarted;
-   closeButton.focus();
- }
- openButton.addEventListener('click',openMenu);
- closeButton.addEventListener('click',closeMenu);
- window.addEventListener('keydown',function(event){
-   if(panel.style.display!=='flex')return;
-   if(event.key==='Escape'&&!busy){event.preventDefault();closeMenu();}
-   if(event.key==='Tab'){
-     const focusables=[launch,manager,closeButton].filter(function(el){return !el.disabled&&el.style.display!=='none';});
-     if(!focusables.length)return;
-     if(event.shiftKey&&document.activeElement===focusables[0]){event.preventDefault();focusables[focusables.length-1].focus();}
-     else if(!event.shiftKey&&document.activeElement===focusables[focusables.length-1]){event.preventDefault();focusables[0].focus();}
-   }
- });
- launch.addEventListener('click',async function(){
-   if(busy||submissionLocked||window.__jarvisPayloadSubmissionStarted||typeof window.__jarvisPayloadSender!=='function')return;
-   busy=true; launch.disabled=true;closeButton.disabled=true;
-   showStatus('Verificando o serviço 8084 e o ELF Loader local 9021...','busy');
-   try {
-     const result=await window.__jarvisPayloadSender('pldmgr',function(message){
-       showStatus(String(message),'busy');
-       log('PAYLOADS: '+String(message),'info');
-     });
-     if(result.alreadyRunning){
-       completed=true; submissionLocked=true;
-       showStatus('Porta 8084 já estava acessível. Nenhum comando foi reenviado. Serviço identificado apenas pela porta, não pelo processo.','ok');
-     }else if(result.commandSent&&result.managerReady){
-       completed=true; submissionLocked=true;
-       showStatus('Comando enviado ao Loader; conexão TCP na porta 8084 disponível. Execução do ELF não comprovada diretamente.','ok');
-     }else if(result.commandSent){
-       completed=true; submissionLocked=true;
-       showStatus('Comando enviado ao Loader, mas a porta 8084 não respondeu. Execução não confirmada.','error');
-     }else {
-       showStatus('O envio não foi confirmado.','error');
-     }
-     if(result.managerReady)manager.style.display='block';
-   } catch(error){
-     submissionLocked=!!window.__jarvisPayloadSubmissionStarted;
-     showStatus('Falha: '+String(error&&error.message||error)+(submissionLocked?' Não repetir nesta sessão.':' É possível tentar novamente quando o Loader estiver acessível.'),'error');
-     log('PAYLOADS: '+status.textContent,'err');
-   } finally {
-     busy=false;closeButton.disabled=false;
-     launch.disabled=submissionLocked||!!window.__jarvisPayloadSubmissionStarted;
-   }
- });
-})(); 
+// Configuração automática/manual e menu implementados em assets/jarvis-payload-ui.js.
 // The exploit and voice start only through src/site.js after user interaction.
 </script>
+<script src="./assets/jarvis-payload-ui.js?v=auto-on-1"></script>
 <script src="./src/firmware.js"></script>
 <script src="./src/main.js?v=manual-2"></script>
 <script src="./src/rop.js"></script>
