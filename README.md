@@ -1,3 +1,15 @@
+# PS5 JARVIS — endereço permanente
+
+**Site principal:** https://patriasco.github.io/PS5-JARVIS-RELAPSE/
+
+O atalho da aba **Mídia** agora deve usar a URL principal acima, **sem parâmetros de versão**. O ELF `PS5-JARVIS-ATALHO-PERMANENTE.elf` (Title ID `JARV00002`) só precisa ser instalado uma vez, usando o carregador ELF que funcionou nas versões anteriores.
+
+**Fluxo obrigatório para novas versões:** atualizar `index.html` e os arquivos necessários no branch `main` deste GitHub, mantendo a mesma URL principal. Quando scripts, offsets, áudio ou estilos mudarem, atualizar também suas referências de versão/cache dentro do site. Não gerar outro ELF para cada atualização.
+
+O cache do GitHub Pages ou do navegador PS5 pode atrasar a exibição de uma atualização; isso não muda a URL do atalho. O ELF não executa o desbloqueio automaticamente e não inicia sozinho o PLD Manager.
+
+---
+
 # PS5 Relapse Exploit
 Supported firmware: 7.00 through 13.60.
 
