@@ -73,7 +73,7 @@ if (startButton) {
     if (!window.__jarvisOffsetsReady || window.firmware.rejection()) return;
     startButton.disabled = false;
     startButton.textContent = "INICIAR DESBLOQUEIO";
-    if (payloadModeButton && !hasStarted) payloadModeButton.disabled = false;
+    // PAYLOADS only becomes visible after run() has returned successfully.
   };
   const failOffsets = () => {
     startButton.disabled = true;
@@ -89,12 +89,6 @@ if (startButton) {
     window.addEventListener("jarvis:offsets-ready", enableWhenReady, { once: true });
     window.addEventListener("jarvis:offsets-error", failOffsets, { once: true });
   }
-  if (payloadModeButton) payloadModeButton.addEventListener("click", () => {
-    if (hasStarted || startButton.disabled || !window.__jarvisOffsetsReady) return;
-    window.__jarvisPayloadMode = true;
-    payloadModeButton.disabled = true;
-    startButton.click();
-  });
   startButton.addEventListener("click", () => {
     if (hasStarted || !window.__jarvisOffsetsReady || startButton.disabled) return;
     hasStarted = true;
@@ -103,7 +97,7 @@ if (startButton) {
     startButton.textContent = "DESBLOQUEIO EM EXECUÇÃO...";
     // Diagnostic mode: run Relapse without audio to isolate browser load from KEXP.
     const silentDiagnostic = new URLSearchParams(window.location.search).get("noaudio") === "1";
-    if (silentDiagnostic || window.__jarvisPayloadMode) {
+    if (silentDiagnostic) {
       writeLog("JARVIS: execução sem áudio (diagnóstico/payloads)", "info");
     } else if (typeof window.jarvisStartVoice === "function") {
       try { window.jarvisStartVoice(); } catch (_) { /* audio must not block exploit */ }
@@ -113,6 +107,13 @@ if (startButton) {
       // main() has finished and reported that the loader was dispatched.
       // We have NOT established that port 9021 accepts connections.
       writeLog("Fluxo Relapse finalizado; Loader despachado, porta 9021 não verificada", "info");
+      if (typeof window.__jarvisPayloadSender !== "function")
+        throw new Error("Fluxo concluído sem contexto de execução de payloads");
+      // This button NEVER triggers USERLAND or KERNEL: it only opens the selector.
+      if (payloadModeButton) {
+        payloadModeButton.hidden = false;
+        payloadModeButton.disabled = false;
+      }
       window.dispatchEvent(new Event("jarvis:exploit-flow-finished"));
       startButton.textContent = "FLUXO FINALIZADO";
     }).catch((error) => {
