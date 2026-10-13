@@ -1,0 +1,31 @@
+
+:root{--accent:#00d9ff;--shadow:rgba(0,217,255,.25);--font:Arial,Helvetica,sans-serif}
+:root.red{--accent:#ec2636;--shadow:rgba(236,38,54,.25)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#03070c;color:#f3f9ff;font-family:var(--font);overflow-x:hidden}
+body{position:relative}#console{position:absolute;left:-99999px;top:0;width:1px;height:1px;overflow:hidden}
+#jarvis-shell{position:relative;min-height:100vh;padding:24px min(4vw,60px);background:radial-gradient(ellipse at 50% 42%,var(--shadow),transparent 34%),#03070c}
+#jarvis-shell:before{content:"";pointer-events:none;position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 119px,rgba(255,255,255,.015) 120px),repeating-linear-gradient(0deg,transparent 0 119px,rgba(255,255,255,.015) 120px)}
+#particles{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.88}
+.brand,.center,footer{position:relative;z-index:2}.brand{display:flex;gap:17px;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,.12)}
+.brand-mark{width:55px;height:55px;display:grid;place-items:center;flex:none;background:rgba(0,217,255,.06);border:1px solid var(--accent);border-radius:13px;font-size:27px;font-weight:900;letter-spacing:-4px;color:var(--accent)}
+.brand-mark span{color:#fff}.brand>div:nth-child(2){flex:1}.brand h1{font-size:24px;letter-spacing:4px;margin:0}.brand h1 b{color:var(--accent)}.brand p{font-size:10px;letter-spacing:2px;color:#9ab5c4}.pill{border:1px solid var(--accent);border-radius:100px;padding:9px 15px;font-size:12px;color:var(--accent);background:#06121a;white-space:nowrap}
+.center{min-height:570px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 0 50px}
+.sphere-center{position:relative;width:min(36vw,280px);height:min(36vw,280px);display:grid;place-items:center}
+.core-ring{position:absolute;border:1px solid var(--accent);border-radius:50%;opacity:.3;box-shadow:0 0 35px var(--shadow)}
+.r1{inset:0;border-style:dashed;animation:spin 30s linear infinite}
+.r2{inset:40px;animation:spin 20s linear infinite reverse}
+.core-text{font-size:42px;font-weight:900;letter-spacing:10px;color:rgba(255,255,255,.8);text-shadow:0 0 20px var(--accent)}
+@keyframes spin{to{transform:rotate(360deg)}}.info{text-align:center;width:min(590px,95vw);background:linear-gradient(180deg,rgba(1,10,16,.45),rgba(1,10,16,.88));border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:17px}
+.phase{color:var(--accent);letter-spacing:4px;font-size:11px;margin-bottom:11px}#status{font-size:clamp(16px,2vw,27px);font-weight:700;min-height:32px}
+.percent{font-size:30px;color:var(--accent);margin:8px}.track{height:5px;background:#243742;border-radius:8px;overflow:hidden;margin:11px auto;width:94%}
+#progress{height:100%;width:0%;background:var(--accent);box-shadow:0 0 15px var(--accent);transition:width .45s}
+.steps{display:flex;justify-content:space-evenly;gap:10px;color:#8cabbc;font-size:clamp(9px,1vw,14px);margin:20px 0 10px}
+.steps span.done{color:#21efad}.steps span.active{color:var(--accent);font-weight:700}.subtitle{color:#a7ebf5;font-size:14px;min-height:24px}.voice{color:#8da7b9;font-size:11px;letter-spacing:1px;margin-top:6px}
+footer{border-top:1px solid rgba(255,255,255,.12);padding:20px 0}.section-title{color:var(--accent);letter-spacing:2px;font-size:12px;margin-bottom:9px}
+.logs{max-width:760px;margin:0 auto;background:rgba(2,10,15,.78);padding:12px;border:1px solid rgba(255,255,255,.07);border-radius:12px}
+#logfeed{color:#aec5d0;font-family:Consolas,monospace;font-size:12px;height:100px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}
+.controls{display:flex;justify-content:center;gap:10px;margin:18px 0;flex-wrap:wrap}
+.controls button{cursor:pointer;border:1px solid var(--accent);color:var(--accent);background:rgba(0,0,0,.6);padding:12px 20px;border-radius:6px;font-size:13px}
+.controls button:focus{outline:2px solid #fff}.credit{text-align:center;color:#65808d;font-size:11px;line-height:1.4}
+@media(max-width:650px){#jarvis-shell{padding:15px}.brand{flex-wrap:wrap}.brand h1{font-size:19px}.pill{width:100%;text-align:center}.center{min-height:450px}.sphere-center{width:210px;height:210px}.r2{inset:28px}.logs{margin-top:0}}
+@media(prefers-reduced-motion:reduce){.r1,.r2{animation:none}}
