@@ -54,7 +54,7 @@ async function run() {
     throw new Error(rejection);
   writeLog("Credits: Sonic_Iso, Jordy, ntfargo, ufm42, Dr. Yenyen, TheFlow, SlidyBat, Flatz, cow, nhk, bollarz, Sleirsgoevy, EchoStretch, EarthOnion", "info");
   writeLog(`Agent: ${navigator.userAgent}`, "info");
-  writeLog(`Firmware: ${window.fw_str} · JARVIS versão 5.1`, "info");
+  writeLog(`Firmware: ${window.fw_str} · JARVIS online (GitHub principal)`, "info");
   const primitive = await getPrimitive();
   writeLog(`WebKit base: 0x${getWebKitBase().toString(16)}`, "info");
 
