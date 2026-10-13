@@ -268,9 +268,9 @@ async function main(userlandRW) {
 
   if (result.payloads) {
     log("kernel exploit complete", "info");
-    log("elfldr is listening on port 9021", "info");
+    log("ELF Loader despachado; porta 9021 ainda não confirmada", "info");
   } else {
-    log("kernel chain complete: root and sandbox escape are active", "info");
+    log("Kernel finalizou sem confirmar o ELF Loader; privilégios não verificados", "info");
   }
 }
 
