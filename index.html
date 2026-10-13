@@ -275,7 +275,8 @@ function onRelapseLog(){
    realFailed=true;window.__jarvisExploitActive=false;$main.textContent='Falha no desbloqueio';$main.style.color='#e50914';$bar.style.background='#e50914';continue;
   }
   // Do not treat kernel-only success as proof that the ELF loader is running.
-  if(/elfldr is listening on port 9021/.test(lower))realStage(3,'Desbloqueio concluído · Loader iniciado (9021)');
+  // Relapse logs indicate that elfldr was dispatched, not a confirmed open TCP port.
+  if(/elfldr is listening on port 9021/.test(lower))realStage(2,'ELF Loader enviado · porta 9021 não verificada');
   else if(/kernel chain complete/.test(lower))realStage(2,'Kernel concluído · ELF Loader não confirmado');
   else if(/kernel exploit complete/.test(lower))realStage(2,'Kernel liberado · Iniciando Loader');
   else if(/arw ready|webkit base:|worker chain: ready/.test(lower))realStage(1,'USERLAND concluído · Iniciando KERNEL');
@@ -365,6 +366,6 @@ if(jarvisStartButton){
 <script src="./src/main.js"></script>
 <script src="./src/rop.js"></script>
 <script src="./src/utils/syscalls.js"></script>
-<script type="module" src="./src/site.js"></script>
+<script type="module" src="./src/site.js?v=jarvisdiag1"></script>
 </body>
 </html>
