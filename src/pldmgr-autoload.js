@@ -6,6 +6,7 @@ export async function sendInstalledPLD(p, chain, sys, log) {
   window.__jarvisPLDAlreadyAttempted = true;
 
   const paths = [
+    "/data/pldmgr/payloads/pldmgr/pldmgr_v0.5.2.elf",
     "/data/ps5_autoloader/pldmgr_v0.5.2.elf",
     "/data/payloads/pldmgr_v0.5.2.elf",
     "/data/pldmgr_v0.5.2.elf",
