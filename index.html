@@ -66,12 +66,16 @@ h1{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:7px;text-shad
   <div class="con" id="console"></div>
   <button id="btnStartExploit" type="button" disabled>PREPARANDO...</button>
 </div>
-<audio id="jarvisAudio" src="./assets/jarvis-voice.mp3" preload="auto" playsinline></audio>
+<audio id="jarvisAudio" preload="auto" playsinline>
+ <source src="./assets/jarvis-voice-ps5.wav" type="audio/wav">
+ <source src="./assets/jarvis-voice-ps5.m4a" type="audio/mp4">
+ <source src="./assets/jarvis-voice.mp3" type="audio/mpeg">
+</audio>
 <script>
 // ===== ÁUDIO EMBUTIDO (funciona offline, sem caminho externo) =====
 const AUDIO_B64 = "";
 const audio = document.getElementById('jarvisAudio');
-audio.src = './assets/jarvis-voice.mp3';
+// A ordem de compatibilidade é WAV PCM, AAC LC e MP3; a seleção é do navegador.
 
 const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
 let W, H, cx, cy, audioOn = true, pulse = 0, pulseT = 0, speaking = false;
@@ -296,7 +300,7 @@ async function tryWebAudioFallback(){
  try{
   if(!jarvisWebAudioCtx)throw new Error('Web Audio indisponível');
   if(jarvisWebAudioCtx.resume)await jarvisWebAudioCtx.resume();
-  const resp=await fetch('./assets/jarvis-voice.mp3');
+  const resp=await fetch('./assets/jarvis-voice-ps5.wav');
   if(!resp.ok)throw new Error('HTTP '+resp.status);
   const source=await resp.arrayBuffer();
   const decoded=await new Promise(function(resolve,reject){
@@ -313,7 +317,7 @@ async function tryWebAudioFallback(){
   log('JARVIS: voz iniciada pelo Web Audio','info');
   jarvisAudioStarted();
  }catch(e){
-  fallbackAudio('NotSupportedError: navegador não reproduziu a voz via MP3 nem Web Audio ('+
+  fallbackAudio('NotSupportedError: navegador não reproduziu WAV/AAC/MP3 nem Web Audio ('+
     String(e&&e.name||e&&e.message||'erro')+')');
  }
 }
@@ -344,7 +348,7 @@ document.getElementById('audioToggle').onclick=startVoice;
 // Voz acionada pela mesma interação de INICIAR, sem bloquear as etapas.
 window.jarvisStartVoice = startVoice;
 audio.addEventListener('ended',jarvisAudioEnded);
-audio.addEventListener('error',function(){log('MP3 não suportado pelo elemento de áudio (erro '+(audio.error&&audio.error.code)+')','err');});
+audio.addEventListener('error',function(){log('O navegador rejeitou as fontes de áudio disponíveis (erro '+(audio.error&&audio.error.code)+')','err');});
 setStages(-1);
 window.__jarvisExploitActive=false;
 var jarvisStartButton=document.getElementById('btnStartExploit');
