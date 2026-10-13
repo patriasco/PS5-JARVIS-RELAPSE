@@ -62,4 +62,25 @@ async function run() {
   await main(primitive);
 }
 
-run().catch((error) => writeLog(error instanceof Error ? error.message : String(error), "error"));
+// USER-INITIATED RUN: loading this page never starts the exploit.
+let hasStarted = false;
+const startButton = document.getElementById("btnStartExploit");
+if (startButton) {
+  startButton.disabled = false;
+  startButton.addEventListener("click", () => {
+    if (hasStarted) return;
+    hasStarted = true;
+    startButton.disabled = true;
+    startButton.textContent = "DESBLOQUEIO EM EXECUÇÃO...";
+    if (typeof window.jarvisStartVoice === "function") {
+      try { window.jarvisStartVoice(); } catch (_) { /* audio must not block exploit */ }
+    }
+    writeLog("Desbloqueio iniciado pelo usuário", "info");
+    run().catch((error) => {
+      writeLog(error instanceof Error ? error.message : String(error), "error");
+      startButton.textContent = "FALHA · RECARREGUE PARA TENTAR NOVAMENTE";
+    });
+  });
+} else {
+  writeLog("Botão de iniciar não encontrado; exploit não executado", "error");
+}
