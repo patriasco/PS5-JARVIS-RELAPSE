@@ -73,7 +73,11 @@ if (startButton) {
     hasStarted = true;
     startButton.disabled = true;
     startButton.textContent = "DESBLOQUEIO EM EXECUÇÃO...";
-    if (typeof window.jarvisStartVoice === "function") {
+    // Diagnostic mode: run Relapse without audio to isolate browser load from KEXP.
+    const silentDiagnostic = new URLSearchParams(window.location.search).get("noaudio") === "1";
+    if (silentDiagnostic) {
+      writeLog("JARVIS diagnóstico: voz desativada nesta execução", "info");
+    } else if (typeof window.jarvisStartVoice === "function") {
       try { window.jarvisStartVoice(); } catch (_) { /* audio must not block exploit */ }
     }
     writeLog("Desbloqueio iniciado pelo usuário", "info");
