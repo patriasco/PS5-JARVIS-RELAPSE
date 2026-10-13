@@ -273,9 +273,17 @@ function onRelapseLog(){
   const msg=(el.textContent||'').trim();
   if(!/^\[[*+\-]\]/.test(msg))continue;
   const lower=msg.toLowerCase();
-  if(/^\[-\]/.test(msg)||/not supported|playstation 5 required|fw version not found|memory primitive unavailable|kernel exploit did not finish|exploit failed|exception/.test(lower)){
-   realFailed=true;window.__jarvisExploitActive=false;$main.textContent='Falha no desbloqueio';$main.style.color='#e50914';$bar.style.background='#e50914';continue;
+  // Recoverable WebKit retries and audio codec errors are not terminal.
+  // Only the run().catch marker or a blocked firmware preflight ends the UI.
+  const terminal=/^\[-\]\s*erro final:/i.test(msg);
+  const preflightError=/firmware ou offsets indisponíveis|falha ao carregar offsets|playstation 5 required|fw .* is not supported/.test(lower);
+  if(terminal||preflightError){
+    realFailed=true;window.__jarvisExploitActive=false;
+    $main.textContent=terminal?'Falha no desbloqueio':'Firmware/offsets indisponíveis';
+    $main.style.color='#e50914';$bar.style.background='#e50914';
+    continue;
   }
+  if(/^\[-\]/.test(msg))continue;
   // Do not treat kernel-only success as proof that the ELF loader is running.
   // Relapse logs indicate that elfldr was dispatched, not a confirmed open TCP port.
   if(/elf loader despachado/.test(lower))realStage(2,'ELF Loader enviado · porta 9021 não verificada');
@@ -370,6 +378,6 @@ if(jarvisStartButton){
 <script src="./src/main.js?v=5.1"></script>
 <script src="./src/rop.js"></script>
 <script src="./src/utils/syscalls.js"></script>
-<script type="module" src="./src/site.js?v=5.1"></script>
+<script type="module" src="./src/site.js?v=5.2"></script>
 </body>
 </html>
