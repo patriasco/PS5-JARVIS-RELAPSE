@@ -100,7 +100,9 @@ if (startButton) {
     }
     writeLog("Desbloqueio iniciado pelo usuário", "info");
     run().catch((error) => {
-      writeLog(error instanceof Error ? error.message : String(error), "error");
+      // Explicit terminal marker distinguishes a real rejection from recoverable
+      // WebKit "Failed" retry logs and unsupported audio codecs.
+      writeLog("ERRO FINAL: " + (error instanceof Error ? error.message : String(error)), "error");
       startButton.textContent = "FALHA · RECARREGUE PARA TENTAR NOVAMENTE";
     }).finally(() => { window.__jarvisExploitActive = false; window.dispatchEvent(new Event('jarvis:execution-ended')); });
   });
