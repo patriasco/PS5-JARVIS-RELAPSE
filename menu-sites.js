@@ -1,13 +1,16 @@
-/* PS5 JARVIS — dois sites; atualize apenas o segundo link aqui. */
+/* PS5 JARVIS — duas opções do MESMO desbloqueio.
+ * O site normal tenta tocar a voz e mostra a animação.
+ * O diagnóstico usa noaudio=1 para não tentar reproduzir áudio.
+ */
 window.JARVIS_MENU_SITES = [
   {
-    name: "PS5 JARVIS",
-    subtitle: "Desbloqueio Relapse · firmware 7.00",
-    url: "https://patriasco.github.io/PS5-JARVIS-RELAPSE/?v=2"
+    name: "JARVIS NORMAL",
+    subtitle: "Com voz e animação · Desbloqueio Relapse",
+    url: "https://patriasco.github.io/PS5-JARVIS-RELAPSE/?v=jarvisdiag1"
   },
   {
-    name: "SITE 2",
-    subtitle: "Aguardando o segundo endereço",
-    url: ""
+    name: "JARVIS DIAGNÓSTICO",
+    subtitle: "Sem áudio · Teste do ELF Loader e porta 9021",
+    url: "https://patriasco.github.io/PS5-JARVIS-RELAPSE/?v=jarvisdiag1&noaudio=1"
   }
 ];
